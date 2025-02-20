@@ -419,8 +419,13 @@ class LLM:
         """
         runner_type = self.llm_engine.model_config.runner_type
         if runner_type != "generate":
+            # print(f"Overriding runner type from '{runner_type}' to 'generate'.")
+            # runner_type = "generate"
+            # self.llm_engine.model_config.runner_type = runner_type
+
+
             messages = [
-                "LLM.generate() is only supported for (conditional) generation "
+                f"runner type: {runner_type}. LLM.generate() is only supported for (conditional) generation "
                 "models (XForCausalLM, XForConditionalGeneration).",
             ]
 
