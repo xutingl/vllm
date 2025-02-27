@@ -207,11 +207,16 @@ def get_skip_mask(
     )
     mask = torch.where(conf <= threshold, 0.0, 1.0).bool()
 
-    if mask.size(0) > 1:
+    # Support batch size > 1
+    if mask.dim() > 0:
         mask = mask[0]
         conf = conf[0]
 
+    # if not return_conf:
+    #     return mask.item() 
+    # else:
+    #     return mask.item(), conf.item()
     if not return_conf:
-        return mask.item() 
+        return mask 
     else:
-        return mask.item(), conf.item()
+        return mask, conf
