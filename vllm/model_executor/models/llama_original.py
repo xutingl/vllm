@@ -539,9 +539,11 @@ class LlamaForCausalLM(nn.Module, SupportsLoRA, SupportsPP):
         intermediate_tensors: Optional[IntermediateTensors] = None,
         inputs_embeds: Optional[torch.Tensor] = None,
     ) -> Union[torch.Tensor, IntermediateTensors]:
+        print(f"[LlamaForCausalLM forward] Input_ids shape: {input_ids.shape}")
         model_output = self.model(input_ids, positions, kv_caches,
                                   attn_metadata, intermediate_tensors,
                                   inputs_embeds)
+        print(f"[LlamaForCausalLM forward] Model output shape: {model_output.shape}")
         return model_output
 
     def compute_logits(

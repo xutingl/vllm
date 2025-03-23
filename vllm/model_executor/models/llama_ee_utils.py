@@ -209,6 +209,7 @@ def get_skip_mask(
 
     # Support batch size > 1
     if mask.dim() > 0:
+        print(f"[get_skip_mask] mask dim: {mask.dim()}")
         mask = mask[0]
         conf = conf[0]
 

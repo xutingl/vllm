@@ -530,9 +530,10 @@ class LlamaDecoderLayer(nn.Module):
     def forward(
         self,
         hidden_states: torch.Tensor,
+        kv_cache: torch.Tensor,
+        attn_metadata: AttentionMetadata,
         attention_mask: Optional[torch.Tensor] = None,
         positions: Optional[torch.LongTensor] = None,
-        past_key_value: Optional[Tuple[torch.Tensor]] = None,
         output_attentions: Optional[bool] = False,
         use_cache: Optional[bool] = False,
         skip_mask=False,
@@ -553,6 +554,10 @@ class LlamaDecoderLayer(nn.Module):
                 If set to `True`, `kv_caches` key value states are returned and can be used to speed up decoding
                 (see `kv_caches`).
             past_key_value (`Tuple(torch.FloatTensor)`, *optional*): cached past key and value projection states
+
+            vLLM modifications:
+            past_key_value: Optional[Tuple[torch.Tensor]] = None     is changed to
+            kv_cache: torch.Tensor,
         """
 
         residual = hidden_states
@@ -563,8 +568,8 @@ class LlamaDecoderLayer(nn.Module):
         hidden_states = self.self_attn(
             positions,
             hidden_states,
-            past_key_value,
-            None,
+            kv_cache,
+            attn_metadata,
             attention_mask=attention_mask,
             output_attentions=output_attentions,
             use_cache=use_cache,
@@ -755,6 +760,7 @@ class LlamaModel(LlamaPreTrainedModel):
             0
         ] * config.num_hidden_layers  # to calculate the average number of forward block layers
 
+        self.config.optimal = False # Disable optimal for vLLM
         if self.config.optimal:
             self.optimal_exiting_layers = []
 
@@ -795,10 +801,11 @@ class LlamaModel(LlamaPreTrainedModel):
     @add_start_docstrings_to_model_forward(LLAMA_INPUTS_DOCSTRING)
     def forward(
         self,
-        input_ids: torch.LongTensor = None,
+        input_ids: Optional[torch.Tensor],
+        positions: torch.Tensor,
+        kv_caches: List[torch.Tensor],
+        attn_metadata: AttentionMetadata,
         attention_mask: Optional[torch.Tensor] = None,
-        positions: Optional[torch.LongTensor] = None,
-        kv_caches: Optional[List[torch.FloatTensor]] = None,
         inputs_embeds: Optional[torch.FloatTensor] = None,
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
@@ -845,7 +852,12 @@ class LlamaModel(LlamaPreTrainedModel):
                 "You cannot specify both decoder_input_ids and decoder_inputs_embeds at the same time"
             )
         elif input_ids is not None:
-            batch_size, seq_length = input_ids.shape
+            # batch_size, seq_length = input_ids.shape
+
+            # Change to adapt vLLM
+            batch_size = 1
+            seq_length = input_ids.shape[0]
+
         elif inputs_embeds is not None:
             batch_size, seq_length, _ = inputs_embeds.shape
         else:
@@ -856,9 +868,9 @@ class LlamaModel(LlamaPreTrainedModel):
         seq_length_with_past = seq_length
         kv_caches_length = 0
 
-        if kv_caches is not None:
-            kv_caches = None
-            print(f"Force kv_caches to None")
+        # if kv_caches is not None:
+        #     kv_caches = None
+        #     print(f"Force kv_caches to None")
             # if len(kv_caches[0]) > 0:
             #     print(f"len(kv_caches): {len(kv_caches)}")
             #     print(f"kv_caches[-1]: {kv_caches[-1]}")
@@ -972,11 +984,10 @@ class LlamaModel(LlamaPreTrainedModel):
                             self.exited_rates[0] += 1
                         else:
                             self.exited_rates[1] += 1
-                        print(f"--------EE statistics---------")
-                        print(f"self.exited_rates: {self.exited_rates}")
-
+                        print(f"--------[LlamaModel: forward] EE statistics at layer{idx}---------")
+                        print(f"self.exited_rates([num_ee, num_no_ee]): {self.exited_rates}")
                         print(f"skip_mask: {skip_mask}, conf: {conf}")
-                        print(f"--------EE statistics---------")
+                        print(f"--------[LlamaModel: forward] EE statistics---------")
 
                         if skip_mask:
                             self.lm_logits = lm_logits
@@ -1037,9 +1048,10 @@ class LlamaModel(LlamaPreTrainedModel):
 
                 layer_outputs = decoder_layer(
                     hidden_states,
+                    kv_caches[idx],
+                    attn_metadata,
                     attention_mask=attention_mask,
                     positions=positions,
-                    past_key_value=past_key_value,
                     output_attentions=output_attentions,
                     use_cache=use_cache,
                 )
@@ -1049,7 +1061,8 @@ class LlamaModel(LlamaPreTrainedModel):
                     # print(lm_logits.shape)
                     # print(torch.argmax(lm_logits, dim=-1))
 
-            hidden_states = layer_outputs[0]
+            # ??? why need this?
+            # hidden_states = layer_outputs[0]
 
             if use_cache:
                 next_decoder_cache += (layer_outputs[2 if output_attentions else 1],)
@@ -1058,6 +1071,9 @@ class LlamaModel(LlamaPreTrainedModel):
                 all_self_attns += (layer_outputs[1],)
 
         hidden_states = self.norm(hidden_states)
+
+        print(f"[LlamaModel: forward] Returning hidden_states shape: {hidden_states.shape}")
+        return hidden_states
         if self.config.optimal and auto_reg:
             self.lm_logits = lm_head(hidden_states)
             final_prediction = torch.argmax(self.lm_logits, dim=-1)
@@ -1286,7 +1302,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel, VllmModelForTextGeneration):
             "shallow_exit_layer": 20,
             "shallow2deep_conf_type": "softmax",
             "shallow2deep_conf_threshold": 0.9,
-            "parallel_gen_token": True,
+            "parallel_gen_token": False,
             "rollback_conf_threshold": None,
             "parallel_causal_mask": True,
             "copy_skipped_hidden_states": False,
@@ -1381,11 +1397,11 @@ class LlamaForCausalLM(LlamaPreTrainedModel, VllmModelForTextGeneration):
         >>> tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
         "Hey, are you consciours? Can you talk to me?\nI'm not consciours, but I can talk to you."
         ```"""
-        use_cache = False
+        use_cache = False # Disable the cache in llama code becuase we are using vLLM's kv cache
         # convert to 2D where shape(0) is batch size and shape(1) is sequence length
         if input_ids.dim() == 1:
             print(f"input_ids shape before converting: {input_ids.shape}")
-            input_ids = input_ids.unsqueeze(0)
+            # input_ids = input_ids.unsqueeze(0)
             print(f"input_ids shape after converting: {input_ids.shape}")
 
         output_attentions = (
@@ -1404,9 +1420,10 @@ class LlamaForCausalLM(LlamaPreTrainedModel, VllmModelForTextGeneration):
 
         outputs = self.model(
             input_ids=input_ids,
-            attention_mask=attention_mask,
             positions=positions,
             kv_caches=kv_caches,
+            attn_metadata=attn_metadata,
+            attention_mask=attention_mask,
             inputs_embeds=inputs_embeds,
             use_cache=use_cache,
             output_attentions=output_attentions,
@@ -1418,7 +1435,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel, VllmModelForTextGeneration):
 
         if self.model.shallow2deep:
             self.model.stack_conf, self.model.stack_pred = (), ()
-        
+        print(f"[LlamaForCausalLM forward] Model output shape: {outputs.shape}")
         return outputs
 
         # hidden_states = outputs[0]
@@ -1454,40 +1471,40 @@ class LlamaForCausalLM(LlamaPreTrainedModel, VllmModelForTextGeneration):
             attentions=outputs.attentions,
         )
 
-    def prepare_inputs_for_generation(
-        self,
-        input_ids,
-        kv_caches=None,
-        attention_mask=None,
-        inputs_embeds=None,
-        **kwargs,
-    ):
-        if kv_caches:
-            input_ids = input_ids[:, -1:]
+    # def prepare_inputs_for_generation(
+    #     self,
+    #     input_ids,
+    #     kv_caches=None,
+    #     attention_mask=None,
+    #     inputs_embeds=None,
+    #     **kwargs,
+    # ):
+    #     if kv_caches:
+    #         input_ids = input_ids[:, -1:]
 
-        positions = kwargs.get("positions", None)
-        if attention_mask is not None and positions is None:
-            # create positions on the fly for batch generation
-            positions = attention_mask.long().cumsum(-1) - 1
-            positions.masked_fill_(attention_mask == 0, 1)
-            if kv_caches:
-                positions = positions[:, -1].unsqueeze(-1)
+    #     positions = kwargs.get("positions", None)
+    #     if attention_mask is not None and positions is None:
+    #         # create positions on the fly for batch generation
+    #         positions = attention_mask.long().cumsum(-1) - 1
+    #         positions.masked_fill_(attention_mask == 0, 1)
+    #         if kv_caches:
+    #             positions = positions[:, -1].unsqueeze(-1)
 
-        # if `inputs_embeds` are passed, we only want to use them in the 1st generation step
-        if inputs_embeds is not None and kv_caches is None:
-            model_inputs = {"inputs_embeds": inputs_embeds}
-        else:
-            model_inputs = {"input_ids": input_ids}
+    #     # if `inputs_embeds` are passed, we only want to use them in the 1st generation step
+    #     if inputs_embeds is not None and kv_caches is None:
+    #         model_inputs = {"inputs_embeds": inputs_embeds}
+    #     else:
+    #         model_inputs = {"input_ids": input_ids}
 
-        model_inputs.update(
-            {
-                "positions": positions,
-                "kv_caches": kv_caches,
-                "use_cache": kwargs.get("use_cache"),
-                "attention_mask": attention_mask,
-            }
-        )
-        return model_inputs
+    #     model_inputs.update(
+    #         {
+    #             "positions": positions,
+    #             "kv_caches": kv_caches,
+    #             "use_cache": kwargs.get("use_cache"),
+    #             "attention_mask": attention_mask,
+    #         }
+    #     )
+    #     return model_inputs
 
     @staticmethod
     def _reorder_cache(kv_caches, beam_idx):
@@ -1753,7 +1770,8 @@ class LlamaForCausalLM(LlamaPreTrainedModel, VllmModelForTextGeneration):
             hidden_states = hidden_states.squeeze()
             print(f"[compute_logits] final hidden_states shape: {hidden_states.shape}")
         
-        hidden_states = hidden_states.squeeze()
+        # hidden_states = hidden_states.squeeze()
+        print(f"[compute_logits] hidden_states shape: {hidden_states.shape}. lm_head shape: {self.lm_head}")
         logits = self.logits_processor(self.lm_head, hidden_states,
                                        sampling_metadata)
         return logits

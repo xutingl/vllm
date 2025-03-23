@@ -1,0 +1,2 @@
+speed input: 371.59 toks/s, output: 255.05 toks/s]
+Total time taken: 1.8326356410980225 seconds. Throughput: 272.8311011677288 tokens per second
