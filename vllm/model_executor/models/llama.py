@@ -22,7 +22,7 @@
 """ PyTorch LLaMA model."""
 import math
 import warnings
-from typing import List, Optional, Tuple, Union, Iterable, Set, Dict, Any
+from typing import List, Optional, Tuple, Union, Iterable, Set, Dict, Any, Type
 
 import torch
 import torch.distributed as dist
@@ -230,19 +230,21 @@ class LlamaMLP(nn.Module):
         hidden_size: int,
         intermediate_size: int,
         hidden_act: str,
+        quant_config: Optional[QuantizationConfig] = None,
+        bias: bool = False,
         prefix: str = "",
     ):
         super().__init__()
         self.gate_up_proj = MergedColumnParallelLinear(
             input_size=hidden_size,
             output_sizes=[intermediate_size] * 2,
-            bias=False,
+            bias=bias,
             prefix=f"{prefix}.gate_up_proj",
         )
         self.down_proj = RowParallelLinear(
             input_size=intermediate_size,
             output_size=hidden_size,
-            bias=False,
+            bias=bias,
             prefix=f"{prefix}.down_proj",
         )
         if hidden_act != "silu":
@@ -291,6 +293,9 @@ class LlamaAttention(nn.Module):
         # MistralConfig has an optional head_dim introduced by Mistral-Nemo
         self.head_dim = getattr(config, "head_dim",
                                 self.hidden_size // self.total_num_heads)
+        # Phi models introduced a partial_rotary_factor parameter in the config
+        partial_rotary_factor = getattr(config, "partial_rotary_factor", 1)
+        self.rotary_dim = int(partial_rotary_factor * self.head_dim)
         self.q_size = self.num_heads * self.head_dim
         self.kv_size = self.num_kv_heads * self.head_dim
         self.scaling = self.head_dim**-0.5
@@ -322,7 +327,7 @@ class LlamaAttention(nn.Module):
 
         self.rotary_emb = get_rope(
             self.head_dim,
-            rotary_dim=self.head_dim,
+            rotary_dim=self.rotary_dim,
             max_position=max_position_embeddings,
             base=rope_theta,
             rope_scaling=rope_scaling,
@@ -508,13 +513,30 @@ class LlamaAttentionOld(nn.Module):
 
 
 class LlamaDecoderLayer(nn.Module):
-    def __init__(self, config: LlamaConfig, prefix: str = ""):
+    def __init__(
+            self,
+            config: LlamaConfig,
+            cache_config: Optional[CacheConfig] = None,
+            prefix: str = ""):
         super().__init__()
         self.hidden_size = config.hidden_size
+        rope_theta = getattr(config, "rope_theta", 10000)
+        rope_scaling = getattr(config, "rope_scaling", None)
+        if rope_scaling is not None and getattr(
+                config, "original_max_position_embeddings", None):
+            rope_scaling["original_max_position_embeddings"] = (
+                config.original_max_position_embeddings)
+        max_position_embeddings = getattr(config, "max_position_embeddings",
+                                          8192)
         self.self_attn = LlamaAttention(config=config,
                                         hidden_size=config.hidden_size,
                                         num_heads=config.num_attention_heads,
-                                        num_kv_heads=config.num_attention_heads,
+                                        num_kv_heads=getattr(config, "num_key_value_heads",
+                                                             config.num_attention_heads),
+                                                             rope_theta=rope_theta,
+                                        rope_scaling=rope_scaling,
+                                        max_position_embeddings=max_position_embeddings,
+                                        cache_config=cache_config,
                                         prefix=f"{prefix}.self_attn")
         self.mlp = LlamaMLP(
             hidden_size=self.hidden_size,
@@ -522,8 +544,8 @@ class LlamaDecoderLayer(nn.Module):
             hidden_act=config.hidden_act,
             prefix=f"{prefix}.mlp",
         )
-        self.input_layernorm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
-        self.post_attention_layernorm = LlamaRMSNorm(
+        self.input_layernorm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+        self.post_attention_layernorm = RMSNorm(
             config.hidden_size, eps=config.rms_norm_eps
         )
 
@@ -532,6 +554,7 @@ class LlamaDecoderLayer(nn.Module):
         hidden_states: torch.Tensor,
         kv_cache: torch.Tensor,
         attn_metadata: AttentionMetadata,
+        residual: Optional[torch.Tensor],
         attention_mask: Optional[torch.Tensor] = None,
         positions: Optional[torch.LongTensor] = None,
         output_attentions: Optional[bool] = False,
@@ -560,11 +583,14 @@ class LlamaDecoderLayer(nn.Module):
             kv_cache: torch.Tensor,
         """
 
-        residual = hidden_states
-
-        hidden_states = self.input_layernorm(hidden_states)
-
         # Self Attention
+        if residual is None:
+            residual = hidden_states
+            hidden_states = self.input_layernorm(hidden_states)
+        else:
+            hidden_states, residual = self.input_layernorm(
+                hidden_states, residual)
+
         hidden_states = self.self_attn(
             positions,
             hidden_states,
@@ -576,15 +602,13 @@ class LlamaDecoderLayer(nn.Module):
             skip_mask=skip_mask,
             stack_hidden_states=stack_hidden_states,
         )
-        hidden_states = residual + hidden_states
 
         # Fully Connected
-        residual = hidden_states
-        hidden_states = self.post_attention_layernorm(hidden_states)
+        hidden_states, residual = self.post_attention_layernorm(hidden_states, residual)
         hidden_states = self.mlp(hidden_states)
-        hidden_states = residual + hidden_states
+        return hidden_states, residual
 
-        outputs = (hidden_states,)
+        # outputs = (hidden_states,)
 
         # if output_attentions:
         #     outputs += (self_attn_weights,)
@@ -707,7 +731,7 @@ LLAMA_INPUTS_DOCSTRING = r"""
     "The bare LLaMA Model outputting raw hidden-states without any specific head on top.",
     LLAMA_START_DOCSTRING,
 )
-class LlamaModel(LlamaPreTrainedModel):
+class LlamaModel(nn.Module):
     """
     Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`LlamaDecoderLayer`]
 
@@ -715,23 +739,50 @@ class LlamaModel(LlamaPreTrainedModel):
         config: LlamaConfig
     """
 
-    def __init__(self, config: LlamaConfig, prefix: str = "", quant_config: QuantizationConfig = None):
-        super().__init__(config)
+    def __init__(self,
+                 *,
+                 vllm_config: VllmConfig,
+                 prefix: str = "",
+                 layer_type: Type[LlamaDecoderLayer] = LlamaDecoderLayer,):
+        super().__init__()
+        config = vllm_config.model_config.hf_config
+        cache_config = vllm_config.cache_config
+        quant_config = vllm_config.quant_config
+        lora_config = vllm_config.lora_config
+
+        self.config = config
         self.quant_config = quant_config
         self.padding_idx = config.pad_token_id
-        self.vocab_size = config.vocab_size
+        lora_vocab = (lora_config.lora_extra_vocab_size *
+                      (lora_config.max_loras or 1)) if lora_config else 0
+        self.vocab_size = config.vocab_size + lora_vocab
+        self.org_vocab_size = config.vocab_size
 
-        self.embed_tokens = nn.Embedding(
-            config.vocab_size, config.hidden_size, self.padding_idx
-        )
+        # self.embed_tokens = nn.Embedding(
+        #     config.vocab_size, config.hidden_size, self.padding_idx
+        # )
+        if get_pp_group().is_first_rank or (config.tie_word_embeddings
+                                            and get_pp_group().is_last_rank):
+            self.embed_tokens = VocabParallelEmbedding(
+                self.vocab_size,
+                config.hidden_size,
+                org_num_embeddings=config.vocab_size,
+                quant_config=quant_config,
+            )
+        else:
+            self.embed_tokens = PPMissingLayer()
+
         self.layers = nn.ModuleList(
-            [LlamaDecoderLayer(config, prefix=f"{prefix}.layers.{i}") for i in range(config.num_hidden_layers)]
+            [LlamaDecoderLayer(config, cache_config=cache_config, prefix=f"{prefix}.layers.{i}") for i in range(config.num_hidden_layers)]
         )
-        self.norm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+        if get_pp_group().is_last_rank:
+            self.norm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+        else:
+            self.norm = PPMissingLayer()
 
         self.gradient_checkpointing = False
         # Initialize weights and apply final processing
-        self.post_init()
+        # self.post_init()
 
         # Shallow-Deep Module
         self.use_shallow_deep = config.use_shallow_deep
@@ -764,8 +815,10 @@ class LlamaModel(LlamaPreTrainedModel):
         if self.config.optimal:
             self.optimal_exiting_layers = []
 
-    def get_input_embeddings(self):
-        return self.embed_tokens
+    # def get_input_embeddings(self):
+    #     return self.embed_tokens
+    def get_input_embeddings(self, input_ids: torch.Tensor) -> torch.Tensor:
+        return self.embed_tokens(input_ids)
 
     def set_input_embeddings(self, value):
         self.embed_tokens = value
@@ -819,11 +872,11 @@ class LlamaModel(LlamaPreTrainedModel):
         print("-------------------------")
         if get_pp_group().is_first_rank:
             print(f"Is first rank. input ids shape: {input_ids.shape}")
-            # if inputs_embeds is not None:
-            #     hidden_states = inputs_embeds
-            # else:
-            #     hidden_states = self.get_input_embeddings(input_ids)
-            # residual = None
+            if inputs_embeds is not None:
+                hidden_states = inputs_embeds
+            else:
+                hidden_states = self.get_input_embeddings(input_ids)
+            residual = None
         else:
             print(f"Not first rank. input ids shape: {input_ids.shape}")
             assert intermediate_tensors is not None
@@ -920,7 +973,7 @@ class LlamaModel(LlamaPreTrainedModel):
         self.shallow2deep = False  # False: skip, and True: forward
         self.lm_logits = None  # to prevent calculating logits twice
 
-        hidden_states = inputs_embeds
+        # hidden_states = inputs_embeds
 
         if self.gradient_checkpointing and self.training:
             if use_cache:
@@ -990,6 +1043,7 @@ class LlamaModel(LlamaPreTrainedModel):
                         print(f"--------[LlamaModel: forward] EE statistics---------")
 
                         if skip_mask:
+                            print(f"[LlamaModel: forward] SKIPPING!")
                             self.lm_logits = lm_logits
                             if self.config.parallel_gen_token:
                                 if use_cache:
@@ -1046,31 +1100,32 @@ class LlamaModel(LlamaPreTrainedModel):
                                     self.stack_conf, self.stack_pred = (), ()
                                 break
 
-                layer_outputs = decoder_layer(
+                hidden_states, residual = decoder_layer(
                     hidden_states,
                     kv_caches[idx],
                     attn_metadata,
+                    residual,
                     attention_mask=attention_mask,
                     positions=positions,
                     output_attentions=output_attentions,
                     use_cache=use_cache,
                 )
-                if auto_reg and self.config.optimal:
-                    lm_logits = lm_head(self.norm(layer_outputs[0]))
-                    exit_decision[idx] = torch.argmax(lm_logits, dim=-1)
+                # if auto_reg and self.config.optimal:
+                #     lm_logits = lm_head(self.norm(layer_outputs[0]))
+                #     exit_decision[idx] = torch.argmax(lm_logits, dim=-1)
                     # print(lm_logits.shape)
                     # print(torch.argmax(lm_logits, dim=-1))
 
             # ??? why need this?
             # hidden_states = layer_outputs[0]
 
-            if use_cache:
-                next_decoder_cache += (layer_outputs[2 if output_attentions else 1],)
+            # if use_cache:
+            #     next_decoder_cache += (layer_outputs[2 if output_attentions else 1],)
 
-            if output_attentions:
-                all_self_attns += (layer_outputs[1],)
+            # if output_attentions:
+            #     all_self_attns += (layer_outputs[1],)
 
-        hidden_states = self.norm(hidden_states)
+        hidden_states, _ = self.norm(hidden_states, residual)
 
         print(f"[LlamaModel: forward] Returning hidden_states shape: {hidden_states.shape}")
         return hidden_states
@@ -1256,7 +1311,7 @@ class LlamaModel(LlamaPreTrainedModel):
         return loaded_params
 
 
-class LlamaForCausalLM(LlamaPreTrainedModel, VllmModelForTextGeneration):
+class LlamaForCausalLM(nn.Module, VllmModelForTextGeneration):
     packed_modules_mapping = {
         "qkv_proj": ["q_proj", "k_proj", "v_proj"],
         "gate_up_proj": ["gate_proj", "up_proj"]
@@ -1295,7 +1350,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel, VllmModelForTextGeneration):
     def __init__(self, *, vllm_config: VllmConfig, apparate=True, optimal=False, prefix: str = "",):
         config = vllm_config.model_config.hf_config
         
-        super().__init__(config)
+        super().__init__()
         self.unpadded_vocab_size = config.vocab_size
         self.apparate_config = {
             "use_shallow_deep": True,
@@ -1311,47 +1366,67 @@ class LlamaForCausalLM(LlamaPreTrainedModel, VllmModelForTextGeneration):
             "optimal": optimal,
         }
         self.times = []
-        self.config.update(self.apparate_config)
-        self.config.output_hidden_states = True # Output hidden states
+        config.update(self.apparate_config)
+        config.output_hidden_states = True # Output hidden states
 
-        self.model = LlamaModel(config, maybe_prefix(prefix, "model"))
+        quant_config = vllm_config.quant_config
+        lora_config = vllm_config.lora_config
+        self.config = config
 
-        self.lm_head = ParallelLMHead(
+        self.model = LlamaModel(vllm_config=vllm_config, prefix=maybe_prefix(prefix, "model"))
+
+        if get_pp_group().is_last_rank:
+            self.unpadded_vocab_size = config.vocab_size
+            if lora_config:
+                self.unpadded_vocab_size += lora_config.lora_extra_vocab_size
+            self.lm_head = ParallelLMHead(
                 self.unpadded_vocab_size,
                 config.hidden_size,
                 org_num_embeddings=config.vocab_size,
                 padding_size=(
                     DEFAULT_VOCAB_PADDING_SIZE
-                    ),
+                    # We need bigger padding if using lora for kernel
+                    # compatibility
+                    if not lora_config else
+                    lora_config.lora_vocab_padding_size),
+                quant_config=quant_config,
                 prefix=maybe_prefix(prefix, "lm_head"),
             )
-        logit_scale = getattr(config, "logit_scale", 1.0)
-        self.logits_processor = LogitsProcessor(self.unpadded_vocab_size,
+            if config.tie_word_embeddings:
+                self.lm_head = self.lm_head.tie_weights(
+                    self.model.embed_tokens)
+
+            logit_scale = getattr(config, "logit_scale", 1.0)
+            self.logits_processor = LogitsProcessor(self.unpadded_vocab_size,
                                                     config.vocab_size,
                                                     logit_scale)
+        else:
+            self.lm_head = PPMissingLayer()
         self.sampler = get_sampler()
         
 
         # Initialize weights and apply final processing
-        self.post_init()
+        # self.post_init()
 
-    def get_input_embeddings(self):
-        return self.model.embed_tokens
+    # def get_input_embeddings(self):
+    #     return self.model.embed_tokens
+    def get_input_embeddings(self, input_ids: torch.Tensor) -> torch.Tensor:
+        return self.model.get_input_embeddings(input_ids)
 
-    def set_input_embeddings(self, value):
-        self.model.embed_tokens = value
+    # def set_input_embeddings(self, value):
+    #     self.model.embed_tokens = value
 
-    def get_output_embeddings(self):
-        return self.lm_head
+    # def get_output_embeddings(self):
+    #     return self.lm_head
 
-    def set_output_embeddings(self, new_embeddings):
-        self.lm_head = new_embeddings
+    # def set_output_embeddings(self, new_embeddings):
+    #     self.lm_head = new_embeddings
 
-    def set_decoder(self, decoder):
-        self.model = decoder
+    # def set_decoder(self, decoder):
+    #     self.model = decoder
 
-    def get_decoder(self):
-        return self.model
+    # def get_decoder(self):
+    #     return self.model
 
     @add_start_docstrings_to_model_forward(LLAMA_INPUTS_DOCSTRING)
     @replace_return_docstrings(
@@ -1506,274 +1581,270 @@ class LlamaForCausalLM(LlamaPreTrainedModel, VllmModelForTextGeneration):
     #     )
     #     return model_inputs
 
-    @staticmethod
-    def _reorder_cache(kv_caches, beam_idx):
-        reordered_past = ()
-        for layer_past in kv_caches:
-            reordered_past += (
-                tuple(
-                    past_state.index_select(0, beam_idx) for past_state in layer_past
-                ),
-            )
-        return reordered_past
+    # @staticmethod
+    # def _reorder_cache(kv_caches, beam_idx):
+    #     reordered_past = ()
+    #     for layer_past in kv_caches:
+    #         reordered_past += (
+    #             tuple(
+    #                 past_state.index_select(0, beam_idx) for past_state in layer_past
+    #             ),
+    #         )
+    #     return reordered_past
 
-    def greedy_search(
-        self,
-        input_ids: torch.LongTensor,
-        logits_processor: Optional[LogitsProcessorList] = None,
-        stopping_criteria: Optional[StoppingCriteriaList] = None,
-        max_length: Optional[int] = None,
-        pad_token_id: Optional[int] = None,
-        eos_token_id: Optional[Union[int, List[int]]] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        output_scores: Optional[bool] = None,
-        return_dict_in_generate: Optional[bool] = None,
-        synced_gpus: bool = False,
-        streamer: Optional["BaseStreamer"] = None,
-        **model_kwargs,
-    ) -> Union[GreedySearchOutput, torch.LongTensor]:
-        r"""
-        Generates sequences of token ids for models with a language modeling head using **greedy decoding** and can be
-        used for text-decoder, text-to-text, speech-to-text, and vision-to-text models.
+    # def greedy_search(
+    #     self,
+    #     input_ids: torch.LongTensor,
+    #     logits_processor: Optional[LogitsProcessorList] = None,
+    #     stopping_criteria: Optional[StoppingCriteriaList] = None,
+    #     max_length: Optional[int] = None,
+    #     pad_token_id: Optional[int] = None,
+    #     eos_token_id: Optional[Union[int, List[int]]] = None,
+    #     output_attentions: Optional[bool] = None,
+    #     output_hidden_states: Optional[bool] = None,
+    #     output_scores: Optional[bool] = None,
+    #     return_dict_in_generate: Optional[bool] = None,
+    #     synced_gpus: bool = False,
+    #     streamer: Optional["BaseStreamer"] = None,
+    #     **model_kwargs,
+    # ) -> Union[GreedySearchOutput, torch.LongTensor]:
+    #     r"""
+    #     Generates sequences of token ids for models with a language modeling head using **greedy decoding** and can be
+    #     used for text-decoder, text-to-text, speech-to-text, and vision-to-text models.
 
-        <Tip warning={true}>
+    #     <Tip warning={true}>
 
-        In most cases, you do not need to call [`~generation.GenerationMixin.greedy_search`] directly. Use generate()
-        instead. For an overview of generation strategies and code examples, check the [following
-        guide](../generation_strategies).
-        """
+    #     In most cases, you do not need to call [`~generation.GenerationMixin.greedy_search`] directly. Use generate()
+    #     instead. For an overview of generation strategies and code examples, check the [following
+    #     guide](../generation_strategies).
+    #     """
 
-        # init values
-        logits_processor = (
-            logits_processor if logits_processor is not None else LogitsProcessorList()
-        )
-        stopping_criteria = (
-            stopping_criteria
-            if stopping_criteria is not None
-            else StoppingCriteriaList()
-        )
-        if max_length is not None:
-            warnings.warn(
-                "`max_length` is deprecated in this function, use"
-                " `stopping_criteria=StoppingCriteriaList([MaxLengthCriteria(max_length=max_length)])` instead.",
-                UserWarning,
-            )
-            stopping_criteria = validate_stopping_criteria(
-                stopping_criteria, max_length
-            )
-        pad_token_id = (
-            pad_token_id
-            if pad_token_id is not None
-            else self.generation_config.pad_token_id
-        )
-        eos_token_id = (
-            eos_token_id
-            if eos_token_id is not None
-            else self.generation_config.eos_token_id
-        )
-        if isinstance(eos_token_id, int):
-            eos_token_id = [eos_token_id]
-        eos_token_id_tensor = (
-            torch.tensor(eos_token_id).to(input_ids.device)
-            if eos_token_id is not None
-            else None
-        )
-        output_scores = (
-            output_scores
-            if output_scores is not None
-            else self.generation_config.output_scores
-        )
-        output_attentions = (
-            output_attentions
-            if output_attentions is not None
-            else self.generation_config.output_attentions
-        )
-        output_hidden_states = (
-            output_hidden_states
-            if output_hidden_states is not None
-            else self.generation_config.output_hidden_states
-        )
-        return_dict_in_generate = (
-            return_dict_in_generate
-            if return_dict_in_generate is not None
-            else self.generation_config.return_dict_in_generate
-        )
+    #     # init values
+    #     logits_processor = (
+    #         logits_processor if logits_processor is not None else LogitsProcessorList()
+    #     )
+    #     stopping_criteria = (
+    #         stopping_criteria
+    #         if stopping_criteria is not None
+    #         else StoppingCriteriaList()
+    #     )
+    #     if max_length is not None:
+    #         warnings.warn(
+    #             "`max_length` is deprecated in this function, use"
+    #             " `stopping_criteria=StoppingCriteriaList([MaxLengthCriteria(max_length=max_length)])` instead.",
+    #             UserWarning,
+    #         )
+    #         stopping_criteria = validate_stopping_criteria(
+    #             stopping_criteria, max_length
+    #         )
+    #     pad_token_id = (
+    #         pad_token_id
+    #         if pad_token_id is not None
+    #         else self.generation_config.pad_token_id
+    #     )
+    #     eos_token_id = (
+    #         eos_token_id
+    #         if eos_token_id is not None
+    #         else self.generation_config.eos_token_id
+    #     )
+    #     if isinstance(eos_token_id, int):
+    #         eos_token_id = [eos_token_id]
+    #     eos_token_id_tensor = (
+    #         torch.tensor(eos_token_id).to(input_ids.device)
+    #         if eos_token_id is not None
+    #         else None
+    #     )
+    #     output_scores = (
+    #         output_scores
+    #         if output_scores is not None
+    #         else self.generation_config.output_scores
+    #     )
+    #     output_attentions = (
+    #         output_attentions
+    #         if output_attentions is not None
+    #         else self.generation_config.output_attentions
+    #     )
+    #     output_hidden_states = (
+    #         output_hidden_states
+    #         if output_hidden_states is not None
+    #         else self.generation_config.output_hidden_states
+    #     )
+    #     return_dict_in_generate = (
+    #         return_dict_in_generate
+    #         if return_dict_in_generate is not None
+    #         else self.generation_config.return_dict_in_generate
+    #     )
 
-        # init attention / hidden states / scores tuples
-        scores = () if (return_dict_in_generate and output_scores) else None
-        decoder_attentions = (
-            () if (return_dict_in_generate and output_attentions) else None
-        )
-        cross_attentions = (
-            () if (return_dict_in_generate and output_attentions) else None
-        )
-        decoder_hidden_states = (
-            () if (return_dict_in_generate and output_hidden_states) else None
-        )
+    #     # init attention / hidden states / scores tuples
+    #     scores = () if (return_dict_in_generate and output_scores) else None
+    #     decoder_attentions = (
+    #         () if (return_dict_in_generate and output_attentions) else None
+    #     )
+    #     cross_attentions = (
+    #         () if (return_dict_in_generate and output_attentions) else None
+    #     )
+    #     decoder_hidden_states = (
+    #         () if (return_dict_in_generate and output_hidden_states) else None
+    #     )
 
-        # if model is an encoder-decoder, retrieve encoder attention weights and hidden states
-        if return_dict_in_generate and self.config.is_encoder_decoder:
-            encoder_attentions = (
-                model_kwargs["encoder_outputs"].get("attentions")
-                if output_attentions
-                else None
-            )
-            encoder_hidden_states = (
-                model_kwargs["encoder_outputs"].get("hidden_states")
-                if output_hidden_states
-                else None
-            )
+    #     # if model is an encoder-decoder, retrieve encoder attention weights and hidden states
+    #     if return_dict_in_generate and self.config.is_encoder_decoder:
+    #         encoder_attentions = (
+    #             model_kwargs["encoder_outputs"].get("attentions")
+    #             if output_attentions
+    #             else None
+    #         )
+    #         encoder_hidden_states = (
+    #             model_kwargs["encoder_outputs"].get("hidden_states")
+    #             if output_hidden_states
+    #             else None
+    #         )
 
-        # keep track of which sequences are already finished
-        unfinished_sequences = torch.ones(
-            input_ids.shape[0], dtype=torch.long, device=input_ids.device
-        )
+    #     # keep track of which sequences are already finished
+    #     unfinished_sequences = torch.ones(
+    #         input_ids.shape[0], dtype=torch.long, device=input_ids.device
+    #     )
 
-        this_peer_finished = False  # used by synced_gpus only
+    #     this_peer_finished = False  # used by synced_gpus only
 
-        idx = 0
-        while True:
-            if synced_gpus:
-                # Under synced_gpus the `forward` call must continue until all gpus complete their sequence.
-                # The following logic allows an early break if all peers finished generating their sequence
-                this_peer_finished_flag = torch.tensor(
-                    0.0 if this_peer_finished else 1.0
-                ).to(input_ids.device)
-                # send 0.0 if we finished, 1.0 otherwise
-                dist.all_reduce(this_peer_finished_flag, op=dist.ReduceOp.SUM)
-                # did all peers finish? the reduced sum will be 0.0 then
-                if this_peer_finished_flag.item() == 0.0:
-                    break
+    #     idx = 0
+    #     while True:
+    #         if synced_gpus:
+    #             # Under synced_gpus the `forward` call must continue until all gpus complete their sequence.
+    #             # The following logic allows an early break if all peers finished generating their sequence
+    #             this_peer_finished_flag = torch.tensor(
+    #                 0.0 if this_peer_finished else 1.0
+    #             ).to(input_ids.device)
+    #             # send 0.0 if we finished, 1.0 otherwise
+    #             dist.all_reduce(this_peer_finished_flag, op=dist.ReduceOp.SUM)
+    #             # did all peers finish? the reduced sum will be 0.0 then
+    #             if this_peer_finished_flag.item() == 0.0:
+    #                 break
 
-            # prepare model inputs
-            model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
+    #         # prepare model inputs
+    #         model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
 
-            start = torch.cuda.Event(enable_timing=True)
-            end = torch.cuda.Event(enable_timing=True)
-            start.record()
-            # forward pass to get next token
-            outputs = self(
-                **model_inputs,
-                return_dict=True,
-                output_attentions=output_attentions,
-                output_hidden_states=output_hidden_states,
-            )
-            idx += 1
-            end.record()
-            torch.cuda.synchronize()
+    #         start = torch.cuda.Event(enable_timing=True)
+    #         end = torch.cuda.Event(enable_timing=True)
+    #         start.record()
+    #         # forward pass to get next token
+    #         outputs = self(
+    #             **model_inputs,
+    #             return_dict=True,
+    #             output_attentions=output_attentions,
+    #             output_hidden_states=output_hidden_states,
+    #         )
+    #         idx += 1
+    #         end.record()
+    #         torch.cuda.synchronize()
 
-            if idx > 1:
-                self.times.append(start.elapsed_time(end))
+    #         if idx > 1:
+    #             self.times.append(start.elapsed_time(end))
 
-            if synced_gpus and this_peer_finished:
-                continue  # don't waste resources running the code we don't need
+    #         if synced_gpus and this_peer_finished:
+    #             continue  # don't waste resources running the code we don't need
 
-            next_token_logits = outputs.logits[:, -1, :]
+    #         next_token_logits = outputs.logits[:, -1, :]
 
-            # pre-process distribution
-            next_tokens_scores = logits_processor(input_ids, next_token_logits)
+    #         # pre-process distribution
+    #         next_tokens_scores = logits_processor(input_ids, next_token_logits)
 
-            # Store scores, attentions and hidden_states when required
-            if return_dict_in_generate:
-                if output_scores:
-                    scores += (next_tokens_scores,)
-                if output_attentions:
-                    decoder_attentions += (
-                        (outputs.decoder_attentions,)
-                        if self.config.is_encoder_decoder
-                        else (outputs.attentions,)
-                    )
-                    if self.config.is_encoder_decoder:
-                        cross_attentions += (outputs.cross_attentions,)
+    #         # Store scores, attentions and hidden_states when required
+    #         if return_dict_in_generate:
+    #             if output_scores:
+    #                 scores += (next_tokens_scores,)
+    #             if output_attentions:
+    #                 decoder_attentions += (
+    #                     (outputs.decoder_attentions,)
+    #                     if self.config.is_encoder_decoder
+    #                     else (outputs.attentions,)
+    #                 )
+    #                 if self.config.is_encoder_decoder:
+    #                     cross_attentions += (outputs.cross_attentions,)
 
-                if output_hidden_states:
-                    decoder_hidden_states += (
-                        (outputs.decoder_hidden_states,)
-                        if self.config.is_encoder_decoder
-                        else (outputs.hidden_states,)
-                    )
+    #             if output_hidden_states:
+    #                 decoder_hidden_states += (
+    #                     (outputs.decoder_hidden_states,)
+    #                     if self.config.is_encoder_decoder
+    #                     else (outputs.hidden_states,)
+    #                 )
 
-            # argmax
-            next_tokens = torch.argmax(next_tokens_scores, dim=-1)
+    #         # argmax
+    #         next_tokens = torch.argmax(next_tokens_scores, dim=-1)
 
-            # finished sentences should have their next token be a padding token
-            if eos_token_id is not None:
-                if pad_token_id is None:
-                    raise ValueError(
-                        "If `eos_token_id` is defined, make sure that `pad_token_id` is defined."
-                    )
-                next_tokens = next_tokens * unfinished_sequences + pad_token_id * (
-                    1 - unfinished_sequences
-                )
+    #         # finished sentences should have their next token be a padding token
+    #         if eos_token_id is not None:
+    #             if pad_token_id is None:
+    #                 raise ValueError(
+    #                     "If `eos_token_id` is defined, make sure that `pad_token_id` is defined."
+    #                 )
+    #             next_tokens = next_tokens * unfinished_sequences + pad_token_id * (
+    #                 1 - unfinished_sequences
+    #             )
 
-            # update generated ids, model inputs, and length for next step
-            input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=-1)
+    #         # update generated ids, model inputs, and length for next step
+    #         input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=-1)
 
-            if streamer is not None:
-                streamer.put(next_tokens.cpu())
-            model_kwargs = self._update_model_kwargs_for_generation(
-                outputs, model_kwargs, is_encoder_decoder=self.config.is_encoder_decoder
-            )
+    #         if streamer is not None:
+    #             streamer.put(next_tokens.cpu())
+    #         model_kwargs = self._update_model_kwargs_for_generation(
+    #             outputs, model_kwargs, is_encoder_decoder=self.config.is_encoder_decoder
+    #         )
 
-            # if eos_token was found in one sentence, set sentence to finished
-            if eos_token_id_tensor is not None:
-                unfinished_sequences = unfinished_sequences.mul(
-                    next_tokens.tile(eos_token_id_tensor.shape[0], 1)
-                    .ne(eos_token_id_tensor.unsqueeze(1))
-                    .prod(dim=0)
-                )
+    #         # if eos_token was found in one sentence, set sentence to finished
+    #         if eos_token_id_tensor is not None:
+    #             unfinished_sequences = unfinished_sequences.mul(
+    #                 next_tokens.tile(eos_token_id_tensor.shape[0], 1)
+    #                 .ne(eos_token_id_tensor.unsqueeze(1))
+    #                 .prod(dim=0)
+    #             )
 
-                # stop when each sentence is finished
-                if unfinished_sequences.max() == 0:
-                    this_peer_finished = True
+    #             # stop when each sentence is finished
+    #             if unfinished_sequences.max() == 0:
+    #                 this_peer_finished = True
 
-            # stop if we exceed the maximum length
-            if stopping_criteria(input_ids, scores):
-                this_peer_finished = True
+    #         # stop if we exceed the maximum length
+    #         if stopping_criteria(input_ids, scores):
+    #             this_peer_finished = True
 
-            if this_peer_finished and not synced_gpus:
-                break
+    #         if this_peer_finished and not synced_gpus:
+    #             break
             
-        if streamer is not None:
-            streamer.end()
+    #     if streamer is not None:
+    #         streamer.end()
 
-        if return_dict_in_generate:
-            if self.config.is_encoder_decoder:
-                return GreedySearchEncoderDecoderOutput(
-                    sequences=input_ids,
-                    scores=scores,
-                    encoder_attentions=encoder_attentions,
-                    encoder_hidden_states=encoder_hidden_states,
-                    decoder_attentions=decoder_attentions,
-                    cross_attentions=cross_attentions,
-                    decoder_hidden_states=decoder_hidden_states,
-                )
-            else:
-                return GreedySearchDecoderOnlyOutput(
-                    sequences=input_ids,
-                    scores=scores,
-                    attentions=decoder_attentions,
-                    hidden_states=decoder_hidden_states,
-                )
-        else:
-            return input_ids
+    #     if return_dict_in_generate:
+    #         if self.config.is_encoder_decoder:
+    #             return GreedySearchEncoderDecoderOutput(
+    #                 sequences=input_ids,
+    #                 scores=scores,
+    #                 encoder_attentions=encoder_attentions,
+    #                 encoder_hidden_states=encoder_hidden_states,
+    #                 decoder_attentions=decoder_attentions,
+    #                 cross_attentions=cross_attentions,
+    #                 decoder_hidden_states=decoder_hidden_states,
+    #             )
+    #         else:
+    #             return GreedySearchDecoderOnlyOutput(
+    #                 sequences=input_ids,
+    #                 scores=scores,
+    #                 attentions=decoder_attentions,
+    #                 hidden_states=decoder_hidden_states,
+    #             )
+    #     else:
+    #         return input_ids
         
     def compute_logits(
         self,
         hidden_states: torch.Tensor,
         sampling_metadata: SamplingMetadata = None,
     ) -> Optional[torch.Tensor]:
-        if isinstance(hidden_states, CausalLMOutputWithPast):
-            print(f"[compute_logits] hidden_states is CausalLMOutputWithPast. hidden states len: {len(hidden_states.hidden_states)}, hidden states[0]shape: {hidden_states.hidden_states[0].shape}")
-            hidden_states = hidden_states.hidden_states[0]
-            hidden_states = hidden_states.squeeze()
-            print(f"[compute_logits] final hidden_states shape: {hidden_states.shape}")
         
         # hidden_states = hidden_states.squeeze()
         print(f"[compute_logits] hidden_states shape: {hidden_states.shape}. lm_head shape: {self.lm_head}")
         logits = self.logits_processor(self.lm_head, hidden_states,
                                        sampling_metadata)
+        print(f"[compute_logits] logits: {logits}")
         return logits
 
     def sample(self, logits: torch.Tensor,
