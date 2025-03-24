@@ -183,6 +183,7 @@ def get_confidence_class(key):
 def get_skip_mask(
     logits: torch.Tensor = None,
     hidden_states: torch.Tensor = None,
+    ee_policy: str = "eager",
     classifier: torch.nn.Linear = None,
     config: AutoConfig = None,
     pos_time: int = 1,
@@ -190,6 +191,15 @@ def get_skip_mask(
     return_conf=False,
 ):
     assert config.shallow2deep_conf_type is not None
+    assert ee_policy != "off", "Turn off EE by setting self.use_shallow_deep = False. Set policy to 'off' incurrs unnecessary overhead."
+    if hidden_states.size(0) > 16:
+        # Heuristic to avoid using EE for prefilling
+        mask = torch.tensor(0.0, device=hidden_states.device).bool()
+        conf = torch.tensor(0.0, device=hidden_states.device)
+        if not return_conf:
+            return mask
+        else:
+            return mask, conf
 
     if config.shallow2deep_conf_type is not None:
         key = config.shallow2deep_conf_type
@@ -206,17 +216,17 @@ def get_skip_mask(
         classifier=classifier,
     )
     mask = torch.where(conf <= threshold, 0.0, 1.0).bool()
+    conf = torch.mean(conf)
+    if ee_policy == "eager":
+        mask = torch.any(mask)
+    elif ee_policy == "lazy":
+        mask = torch.all(mask)
+    elif ee_policy == "average":
+        val = 0.0 if conf <= threshold else 1.0
+        mask = torch.tensor(val, device=hidden_states.device).bool()
+    else:
+        raise ValueError("Invalid EE policy: {}".format(ee_policy))
 
-    # Support batch size > 1
-    if mask.dim() > 0:
-        print(f"[get_skip_mask] mask dim: {mask.dim()}")
-        mask = mask[0]
-        conf = conf[0]
-
-    # if not return_conf:
-    #     return mask.item() 
-    # else:
-    #     return mask.item(), conf.item()
     if not return_conf:
         return mask 
     else:

@@ -348,7 +348,6 @@ class LlamaModel(nn.Module):
         intermediate_tensors: Optional[IntermediateTensors],
         inputs_embeds: Optional[torch.Tensor] = None,
     ) -> Union[torch.Tensor, IntermediateTensors]:
-        print(f"[LlamaModel forward] Input_ids shape: {input_ids.shape}")
         if get_pp_group().is_first_rank:
             if inputs_embeds is not None:
                 hidden_states = inputs_embeds
@@ -522,7 +521,6 @@ class LlamaForCausalLM(nn.Module, SupportsLoRA, SupportsPP):
         self.make_empty_intermediate_tensors = (
             self.model.make_empty_intermediate_tensors)
         
-        print(f"Initialized LlamaForCausalLM with prefix {prefix}")
 
     def _init_model(self, vllm_config: VllmConfig, prefix: str = ""):
         return LlamaModel(vllm_config=vllm_config, prefix=prefix)
@@ -539,11 +537,9 @@ class LlamaForCausalLM(nn.Module, SupportsLoRA, SupportsPP):
         intermediate_tensors: Optional[IntermediateTensors] = None,
         inputs_embeds: Optional[torch.Tensor] = None,
     ) -> Union[torch.Tensor, IntermediateTensors]:
-        print(f"[LlamaForCausalLM forward] Input_ids shape: {input_ids.shape}")
         model_output = self.model(input_ids, positions, kv_caches,
                                   attn_metadata, intermediate_tensors,
                                   inputs_embeds)
-        print(f"[LlamaForCausalLM forward] Model output shape: {model_output.shape}")
         return model_output
 
     def compute_logits(
@@ -551,7 +547,6 @@ class LlamaForCausalLM(nn.Module, SupportsLoRA, SupportsPP):
         hidden_states: torch.Tensor,
         sampling_metadata: SamplingMetadata,
     ) -> Optional[torch.Tensor]:
-        print(f"[compute_logits] Hidden states shape: {hidden_states.shape}")
         logits = self.logits_processor(self.lm_head, hidden_states,
                                        sampling_metadata)
         return logits

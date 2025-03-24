@@ -402,7 +402,7 @@ class LlamaModel(nn.Module):
         self.stack_hidden_states = ()  # store hidden_states that do not forward Deep decoder
 
         # Adaptive Threshold Estimator
-        self.bmm_model = BetaMixture1D()
+        #self.bmm_model = BetaMixture1D()
         self.bmm_threshold = config.shallow2deep_conf_threshold
         self.stack_conf, self.stack_pred = (), ()
         self.stack_conf_all, self.stack_ident_all = (), []
@@ -467,18 +467,18 @@ class LlamaModel(nn.Module):
         lm_head: Optional[nn.Linear] = None,
         intermediate_tensors: Optional[IntermediateTensors] = None,
     ) -> Union[Tuple, BaseModelOutputWithPast]:
-        print(f"LlamaModel forward. input_ids shape: {input_ids.shape}")
-        print(f"attention_mask shape: {attention_mask.shape if attention_mask is not None else None}")
-        print("-------------------------")
+        # print(f"LlamaModel forward. input_ids shape: {input_ids.shape}")
+        # print(f"attention_mask shape: {attention_mask.shape if attention_mask is not None else None}")
+        # print("-------------------------")
         if get_pp_group().is_first_rank:
-            print(f"Is first rank. input ids shape: {input_ids.shape}")
+            #print(f"Is first rank. input ids shape: {input_ids.shape}")
             if inputs_embeds is not None:
                 hidden_states = inputs_embeds
             else:
                 hidden_states = self.get_input_embeddings(input_ids)
             residual = None
         else:
-            print(f"Not first rank. input ids shape: {input_ids.shape}")
+            #print(f"Not first rank. input ids shape: {input_ids.shape}")
             assert intermediate_tensors is not None
             hidden_states = intermediate_tensors["hidden_states"]
             residual = intermediate_tensors["residual"]
@@ -621,12 +621,13 @@ class LlamaModel(nn.Module):
             else:
                 # shallow-deep module
                 if auto_reg and idx > 0:
+                    # self.use_shallow_deep = False # [Turn off EE]
                     if self.use_shallow_deep and idx == self.shallow_exit_layer:
                         lm_logits = lm_head(self.norm(hidden_states))
                         skip_mask, conf = get_skip_mask(
-                            lm_logits,
-                            hidden_states,
-                            None,
+                            logits=lm_logits,
+                            hidden_states=hidden_states,
+                            ee_policy="eager",
                             config=self.config,
                             adapt_threshold=self.bmm_threshold,
                             return_conf=True,
@@ -637,13 +638,13 @@ class LlamaModel(nn.Module):
                             self.exited_rates[0] += 1
                         else:
                             self.exited_rates[1] += 1
-                        print(f"--------[LlamaModel: forward] EE statistics at layer{idx}---------")
-                        print(f"self.exited_rates([num_ee, num_no_ee]): {self.exited_rates}")
-                        print(f"skip_mask: {skip_mask}, conf: {conf}")
-                        print(f"--------[LlamaModel: forward] EE statistics---------")
+                        # print(f"--------[LlamaModel: forward] EE statistics at layer{idx}---------")
+                        # print(f"self.exited_rates([num_ee, num_no_ee]): {self.exited_rates}")
+                        # print(f"skip_mask: {skip_mask}, conf: {conf}")
+                        # print(f"--------[LlamaModel: forward] EE statistics---------")
 
                         if skip_mask:
-                            print(f"[LlamaModel: forward] SKIPPING!")
+                            # print(f"[LlamaModel: forward] SKIPPING!")
                             self.lm_logits = lm_logits
                             if self.config.parallel_gen_token:
                                 if use_cache:
@@ -727,7 +728,7 @@ class LlamaModel(nn.Module):
 
         hidden_states, _ = self.norm(hidden_states, residual)
 
-        print(f"[LlamaModel: forward] Returning hidden_states shape: {hidden_states.shape}")
+        # print(f"[LlamaModel: forward] Returning hidden_states shape: {hidden_states.shape}")
         return hidden_states
         if self.config.optimal and auto_reg:
             self.lm_logits = lm_head(hidden_states)
@@ -1052,8 +1053,8 @@ class LlamaForCausalLM(nn.Module, VllmModelForTextGeneration):
         ```"""
         use_cache = False # Disable the cache in llama code becuase we are using vLLM's kv cache
 
-        if input_ids.dim() == 1:
-            print(f"input_ids shape : {input_ids.shape}")
+        # if input_ids.dim() == 1:
+        #     print(f"input_ids shape : {input_ids.shape}")
     
 
         output_attentions = (
@@ -1087,7 +1088,7 @@ class LlamaForCausalLM(nn.Module, VllmModelForTextGeneration):
 
         if self.model.shallow2deep:
             self.model.stack_conf, self.model.stack_pred = (), ()
-        print(f"[LlamaForCausalLM forward] Model output shape: {outputs.shape}")
+        # print(f"[LlamaForCausalLM forward] Model output shape: {outputs.shape}")
         return outputs
 
         # hidden_states = outputs[0]
@@ -1418,7 +1419,7 @@ class LlamaForCausalLM(nn.Module, VllmModelForTextGeneration):
     ) -> Optional[torch.Tensor]:
         
         # hidden_states = hidden_states.squeeze()
-        print(f"[compute_logits] hidden_states shape: {hidden_states.shape}. lm_head shape: {self.lm_head}")
+        # print(f"[compute_logits] hidden_states shape: {hidden_states.shape}. lm_head shape: {self.lm_head}")
         logits = self.logits_processor(self.lm_head, hidden_states,
                                        sampling_metadata)
         return logits
