@@ -554,7 +554,6 @@ class LlamaForCausalLM(nn.Module, SupportsLoRA, SupportsPP):
         print(f"[compute_logits] Hidden states shape: {hidden_states.shape}")
         logits = self.logits_processor(self.lm_head, hidden_states,
                                        sampling_metadata)
-        print(f"[compute_logits] logits: {logits}")
         return logits
 
     def sample(self, logits: torch.Tensor,

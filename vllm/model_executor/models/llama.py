@@ -1356,12 +1356,12 @@ class LlamaForCausalLM(nn.Module, VllmModelForTextGeneration):
             "use_shallow_deep": True,
             "shallow_exit_layer": 20,
             "shallow2deep_conf_type": "softmax",
-            "shallow2deep_conf_threshold": 0.9,
+            "shallow2deep_conf_threshold": 0.6,
             "parallel_gen_token": False,
             "rollback_conf_threshold": None,
             "parallel_causal_mask": True,
             "copy_skipped_hidden_states": False,
-            "use_adapt_threshold": True,
+            "use_adapt_threshold": False,
             "apparate": apparate,
             "optimal": optimal,
         }
@@ -1844,7 +1844,6 @@ class LlamaForCausalLM(nn.Module, VllmModelForTextGeneration):
         print(f"[compute_logits] hidden_states shape: {hidden_states.shape}. lm_head shape: {self.lm_head}")
         logits = self.logits_processor(self.lm_head, hidden_states,
                                        sampling_metadata)
-        print(f"[compute_logits] logits: {logits}")
         return logits
 
     def sample(self, logits: torch.Tensor,
