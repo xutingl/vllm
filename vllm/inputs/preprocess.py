@@ -198,10 +198,12 @@ class InputPreprocessor:
                     "do_lower_case", False)):
             prompt = prompt.lower()
 
-        return tokenizer.encode(request_id=request_id,
+        tokenized_ids = tokenizer.encode(request_id=request_id,
                                 prompt=prompt,
                                 lora_request=lora_request,
                                 add_special_tokens=add_special_tokens)
+        print(f"[InputPreprocessor] tokenized_ids: {tokenized_ids}")
+        return tokenized_ids
 
     async def _tokenize_prompt_async(
         self,
