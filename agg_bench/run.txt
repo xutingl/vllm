@@ -1,0 +1,3 @@
+nohup ./agg_bench.sh > agg_bench_run.log 2>&1 &
+
+136167

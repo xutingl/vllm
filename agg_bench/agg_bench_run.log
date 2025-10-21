@@ -1,0 +1,38 @@
+nohup: ignoring input
+Starting vLLM benchmark for model: meta-llama/Meta-Llama-3-70B-Instruct
+Log files and results will be saved in the 'benchmark_logs_20251020_230345' directory.
+--------------------------------------------------------
+Starting server for TP=2, DP=4 ... Log: benchmark_logs_20251020_230345/server_tp2_dp4.log
+Waiting for server (PID: 136171) to start...
+Server started. Running benchmarks...
+  Running benchmark: Concurrency=4... Log: benchmark_logs_20251020_230345/client_tp2_dp4_concurrency4.log
+  Benchmark finished for Concurrency=4.
+  Running benchmark: Concurrency=8... Log: benchmark_logs_20251020_230345/client_tp2_dp4_concurrency8.log
+  Benchmark finished for Concurrency=8.
+  Running benchmark: Concurrency=16... Log: benchmark_logs_20251020_230345/client_tp2_dp4_concurrency16.log
+  Benchmark finished for Concurrency=16.
+  Running benchmark: Concurrency=32... Log: benchmark_logs_20251020_230345/client_tp2_dp4_concurrency32.log
+  Benchmark finished for Concurrency=32.
+  Running benchmark: Concurrency=64... Log: benchmark_logs_20251020_230345/client_tp2_dp4_concurrency64.log
+  Benchmark finished for Concurrency=64.
+Stopping server (PID: 136171)...
+Server stopped.
+--------------------------------------------------------
+Starting server for TP=8, DP=1 ... Log: benchmark_logs_20251020_230345/server_tp8_dp1.log
+Waiting for server (PID: 150326) to start...
+Server started. Running benchmarks...
+  Running benchmark: Concurrency=4... Log: benchmark_logs_20251020_230345/client_tp8_dp1_concurrency4.log
+  Benchmark finished for Concurrency=4.
+  Running benchmark: Concurrency=8... Log: benchmark_logs_20251020_230345/client_tp8_dp1_concurrency8.log
+  Benchmark finished for Concurrency=8.
+  Running benchmark: Concurrency=16... Log: benchmark_logs_20251020_230345/client_tp8_dp1_concurrency16.log
+  Benchmark finished for Concurrency=16.
+  Running benchmark: Concurrency=32... Log: benchmark_logs_20251020_230345/client_tp8_dp1_concurrency32.log
+  Benchmark finished for Concurrency=32.
+  Running benchmark: Concurrency=64... Log: benchmark_logs_20251020_230345/client_tp8_dp1_concurrency64.log
+  Benchmark finished for Concurrency=64.
+Stopping server (PID: 150326)...
+Server stopped.
+--------------------------------------------------------
+All benchmarking tasks are completed.
+Check the 'benchmark_logs_20251020_230345' directory for detailed results.

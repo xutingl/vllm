@@ -1,0 +1,1 @@
+nohup ./disagg.sh > disagg_run.log 2>&1 &

@@ -1,0 +1,38 @@
+INFO 10-20 21:58:17 [__init__.py:225] Automatically detected platform cuda.
+Namespace(subparser='bench', bench_type='serve', dispatch_function=<function BenchmarkServingSubcommand.cmd at 0x7c5f64296200>, seed=0, num_prompts=256, dataset_name='random', no_stream=False, dataset_path=None, no_oversample=False, skip_chat_template=False, disable_shuffle=False, custom_output_len=256, spec_bench_output_len=256, spec_bench_category=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, blazedit_min_distance=0.0, blazedit_max_distance=1.0, random_input_len=1024, random_output_len=2048, random_range_ratio=0.0, random_prefix_len=0, random_batch_size=1, no_reranker=False, random_mm_base_items_per_request=1, random_mm_num_mm_items_range_ratio=0.0, random_mm_limit_mm_per_prompt={'image': 255, 'video': 0}, random_mm_bucket_config={(256, 256, 1): 0.5, (720, 1280, 1): 0.5, (720, 1280, 16): 0.0}, hf_subset=None, hf_split=None, hf_name=None, hf_output_len=None, prefix_repetition_prefix_len=256, prefix_repetition_suffix_len=256, prefix_repetition_num_prefixes=10, prefix_repetition_output_len=128, label=None, backend='openai', base_url=None, host='127.0.0.1', port=8000, endpoint='/v1/completions', header=None, max_concurrency=64, model='meta-llama/Meta-Llama-3-70B-Instruct', tokenizer='meta-llama/Meta-Llama-3-70B-Instruct', use_beam_search=False, logprobs=None, request_rate=inf, burstiness=1.0, trust_remote_code=False, disable_tqdm=False, num_warmups=0, profile=False, save_result=True, save_detailed=True, append_result=False, metadata=None, result_dir='benchmark_logs_20251020_213525', result_filename='benchmark_tp4_dp2_concurrency32.json', ignore_eos=False, percentile_metrics=None, metric_percentiles='99', goodput=None, request_id_prefix='benchmark-serving', top_p=None, top_k=None, min_p=None, temperature=None, frequency_penalty=None, presence_penalty=None, repetition_penalty=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None, ramp_up_strategy=None, ramp_up_start_rps=None, ramp_up_end_rps=None, ready_check_timeout_sec=600, extra_body=None)
+INFO 10-20 21:58:22 [datasets.py:603] Sampling input_len from [1023, 1023] and output_len from [2048, 2048]
+Starting initial single prompt test run...
+Waiting for endpoint to become up in 600 seconds
+ |          | 00:00 elapsed, ? remaining |          | 00:00 elapsed, 00:09 remaining |          | 00:00 elapsed, 70:04:28 remaining
+Initial test run completed.
+Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 64
+  0%|          | 0/256 [00:00<?, ?it/s]  0%|          | 1/256 [00:00<01:35,  2.67it/s]  1%|          | 2/256 [00:00<01:22,  3.07it/s]  4%|▍         | 10/256 [00:00<00:14, 16.60it/s]  7%|▋         | 19/256 [00:01<00:09, 24.47it/s]  9%|▉         | 23/256 [00:01<00:08, 26.79it/s] 11%|█         | 27/256 [00:01<00:08, 27.68it/s] 12%|█▏        | 31/256 [00:01<00:07, 28.71it/s] 14%|█▎        | 35/256 [00:01<00:08, 26.85it/s] 15%|█▍        | 38/256 [00:01<00:09, 22.76it/s] 16%|█▌        | 40/256 [00:19<00:09, 22.76it/s] 16%|█▌        | 41/256 [00:47<13:49,  3.86s/it] 31%|███▏      | 80/256 [00:47<02:00,  1.46it/s] 34%|███▎      | 86/256 [00:48<01:41,  1.68it/s] 37%|███▋      | 94/256 [00:48<01:14,  2.16it/s] 39%|███▉      | 100/256 [00:48<00:59,  2.63it/s] 41%|████      | 105/256 [00:48<00:47,  3.18it/s] 43%|████▎     | 110/256 [00:48<00:37,  3.88it/s] 45%|████▌     | 116/256 [00:48<00:27,  5.17it/s] 47%|████▋     | 121/256 [00:49<00:21,  6.29it/s] 51%|█████     | 130/256 [00:49<00:13,  9.44it/s] 54%|█████▍    | 138/256 [00:49<00:09, 12.36it/s] 56%|█████▋    | 144/256 [00:49<00:07, 14.82it/s] 58%|█████▊    | 148/256 [00:50<00:07, 15.25it/s] 59%|█████▉    | 152/256 [00:50<00:06, 17.25it/s] 61%|██████▏   | 157/256 [00:50<00:04, 20.63it/s] 63%|██████▎   | 161/256 [00:51<00:11,  8.17it/s] 64%|██████▍   | 164/256 [00:52<00:12,  7.23it/s] 65%|██████▍   | 166/256 [00:55<00:30,  2.93it/s] 65%|██████▍   | 166/256 [01:09<00:30,  2.93it/s] 65%|██████▌   | 167/256 [01:30<06:03,  4.08s/it] 66%|██████▌   | 168/256 [01:33<05:47,  3.95s/it] 74%|███████▍  | 189/256 [01:34<00:53,  1.24it/s] 77%|███████▋  | 196/256 [01:34<00:36,  1.66it/s] 79%|███████▉  | 202/256 [01:34<00:24,  2.19it/s] 82%|████████▏ | 210/256 [01:34<00:14,  3.20it/s] 85%|████████▍ | 217/256 [01:34<00:08,  4.40it/s] 88%|████████▊ | 225/256 [01:34<00:04,  6.28it/s] 91%|█████████ | 232/256 [01:35<00:03,  6.68it/s] 93%|█████████▎| 237/256 [01:38<00:04,  3.96it/s] 93%|█████████▎| 238/256 [01:49<00:04,  3.96it/s] 93%|█████████▎| 239/256 [02:10<00:34,  2.01s/it] 94%|█████████▍| 240/256 [02:12<00:32,  2.05s/it]100%|██████████| 256/256 [02:12<00:00,  1.93it/s]
+tip: install termplotlib and gnuplot to plot the metrics
+============ Serving Benchmark Result ============
+Successful requests:                     256       
+Failed requests:                         0         
+Maximum request concurrency:             64        
+Benchmark duration (s):                  132.71    
+Total input tokens:                      261888    
+Total generated tokens:                  300217    
+Request throughput (req/s):              1.93      
+Output token throughput (tok/s):         2262.14   
+Peak output token throughput (tok/s):    3072.00   
+Peak concurrent requests:                106.00    
+Total Token throughput (tok/s):          4235.46   
+---------------Time to First Token----------------
+Mean TTFT (ms):                          378.15    
+Median TTFT (ms):                        323.63    
+P99 TTFT (ms):                           877.43    
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          52.84     
+Median TPOT (ms):                        22.88     
+P99 TPOT (ms):                           328.78    
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           22.22     
+Median ITL (ms):                         21.73     
+P99 ITL (ms):                            24.24     
+==================================================
