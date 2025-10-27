@@ -24,6 +24,7 @@ from vllm.utils import random_uuid
 from .cache import CacheConfig
 from .compilation import CompilationConfig, CompilationMode, CUDAGraphMode
 from .device import DeviceConfig
+from .ee import EEConfig
 from .kv_events import KVEventsConfig
 from .kv_transfer import KVTransferConfig
 from .load import LoadConfig
@@ -73,6 +74,8 @@ class VllmConfig:
     """LoRA configuration."""
     speculative_config: SpeculativeConfig | None = None
     """Speculative decoding configuration."""
+    ee_config: EEConfig | None = None
+    """Early exit configuration."""
     structured_outputs_config: StructuredOutputsConfig = Field(
         default_factory=StructuredOutputsConfig
     )
@@ -158,6 +161,10 @@ class VllmConfig:
             vllm_factors.append("None")
         if self.speculative_config:
             vllm_factors.append(self.speculative_config.compute_hash())
+        else:
+            vllm_factors.append("None")
+        if self.ee_config:
+            vllm_factors.append(self.ee_config.compute_hash())
         else:
             vllm_factors.append("None")
         if self.structured_outputs_config:
@@ -273,6 +280,9 @@ class VllmConfig:
         if self.model_config is not None:
             self.model_config.verify_with_parallel_config(self.parallel_config)
             self.model_config.verify_dual_chunk_attention_config(self.load_config)
+            # Pass ee_config to model_config for architecture selection
+            if self.ee_config is not None:
+                self.model_config.ee_config = self.ee_config
 
         self.cache_config.verify_with_parallel_config(self.parallel_config)
 
@@ -874,6 +884,7 @@ class VllmConfig:
     def __str__(self):
         return (
             f"model={self.model_config.model!r}, "
+            f"ee_config={self.ee_config!r}, "
             f"speculative_config={self.speculative_config!r}, "
             f"tokenizer={self.model_config.tokenizer!r}, "
             f"skip_tokenizer_init={self.model_config.skip_tokenizer_init}, "

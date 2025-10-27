@@ -24,6 +24,7 @@ from vllm.config.parallel import EPLBConfig, ParallelConfig
 from vllm.config.pooler import PoolerConfig
 from vllm.config.scheduler import SchedulerConfig
 from vllm.config.speculative import SpeculativeConfig
+from vllm.config.ee import EEConfig
 from vllm.config.speech_to_text import SpeechToTextConfig
 from vllm.config.structured_outputs import StructuredOutputsConfig
 from vllm.config.utils import (
@@ -79,6 +80,8 @@ __all__ = [
     "SchedulerConfig",
     # From vllm.config.speculative
     "SpeculativeConfig",
+    # From vllm.config.ee
+    "EEConfig",
     # From vllm.config.speech_to_text
     "SpeechToTextConfig",
     # From vllm.config.structured_outputs

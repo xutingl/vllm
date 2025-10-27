@@ -18,6 +18,7 @@ import vllm.envs as envs
 from vllm.config.multimodal import MMCacheType, MMEncoderTPMode, MultiModalConfig
 from vllm.config.pooler import PoolerConfig
 from vllm.config.scheduler import RunnerType
+from vllm.config.ee import EEConfig
 from vllm.config.utils import assert_hashable, config, getattr_iter
 from vllm.logger import init_logger
 from vllm.model_executor.layers.batch_invariant import (
@@ -316,6 +317,8 @@ class ModelConfig:
     interleave_mm_strings: InitVar[bool | None] = None
     skip_mm_profiling: InitVar[bool | None] = None
     video_pruning_rate: InitVar[float | None] = None
+
+    ee_config: EEConfig | None = None
 
     def compute_hash(self) -> str:
         """

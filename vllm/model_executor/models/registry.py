@@ -120,6 +120,7 @@ _TEXT_GENERATION_MODELS = {
     "Lfm2ForCausalLM": ("lfm2", "Lfm2ForCausalLM"),
     "Lfm2MoeForCausalLM": ("lfm2_moe", "Lfm2MoeForCausalLM"),
     "LlamaForCausalLM": ("llama", "LlamaForCausalLM"),
+    "EELlamaForCausalLM": ("llama_ee", "EELlamaForCausalLM"),
     "Llama4ForCausalLM": ("llama4", "Llama4ForCausalLM"),
     # For decapoda-research/llama-*
     "LLaMAForCausalLM": ("llama", "LlamaForCausalLM"),
@@ -965,6 +966,10 @@ class _ModelRegistry:
                     return (model_cls, arch)
 
         for arch in architectures:
+            if model_config.ee_config:
+                if arch == "LlamaForCausalLM":
+                    arch = "EELlamaForCausalLM"
+                    print(f"[_ModelRegistry.resolve_model_cls] modifying arch to {arch} for EE config")
             normalized_arch = self._normalize_arch(arch, model_config)
             model_cls = self._try_load_model_cls(normalized_arch)
             if model_cls is not None:

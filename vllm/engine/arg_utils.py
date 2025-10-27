@@ -50,6 +50,7 @@ from vllm.config import (
     PoolerConfig,
     SchedulerConfig,
     SpeculativeConfig,
+    EEConfig,
     StructuredOutputsConfig,
     VllmConfig,
     get_attr_docs,
@@ -502,6 +503,9 @@ class EngineArgs:
     logits_processor_pattern: str | None = ModelConfig.logits_processor_pattern
 
     speculative_config: dict[str, Any] | None = None
+
+    # Early exit
+    ee_config: dict[str, Any] | None = None
 
     show_hidden_metrics_for_version: str | None = (
         ObservabilityConfig.show_hidden_metrics_for_version
@@ -1105,6 +1109,9 @@ class EngineArgs:
             help="Log aggregate rather than per-engine statistics "
             "when using data parallelism.",
         )
+
+        # Early exit
+
         return parser
 
     @classmethod
@@ -1681,6 +1688,7 @@ class EngineArgs:
             device_config=device_config,
             lora_config=lora_config,
             speculative_config=speculative_config,
+            ee_config=self.ee_config,
             load_config=load_config,
             structured_outputs_config=self.structured_outputs_config,
             observability_config=observability_config,
