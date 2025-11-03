@@ -5,7 +5,7 @@
 MODEL_ID="meta-llama/Meta-Llama-3-70B-Instruct"
 
 # Define the different maximum concurrency levels you want to test.
-CONCURRENCY_LEVELS=(4 8 16 32 64)
+CONCURRENCY_LEVELS=(128)
 
 # Define the Tensor Parallel (TP) and "Data Parallel" (DP) combinations.
 # The product of TP and DP should equal your total number of GPUs (8).
@@ -82,7 +82,6 @@ for config in "${PARALLEL_CONFIGS[@]}"; do
             --random-input-len 1024 \
             --random-output-len 2048 \
             --num-prompts 256 \
-            --max-concurrency "$((concurrency * DP))" \
             --save-result \
             --save-detailed \
             --result-dir "$LOG_DIR" \
