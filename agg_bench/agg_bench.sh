@@ -82,6 +82,7 @@ for config in "${PARALLEL_CONFIGS[@]}"; do
             --random-input-len 1024 \
             --random-output-len 2048 \
             --num-prompts 256 \
+            --max-concurrency "$concurrency" \
             --save-result \
             --save-detailed \
             --result-dir "$LOG_DIR" \

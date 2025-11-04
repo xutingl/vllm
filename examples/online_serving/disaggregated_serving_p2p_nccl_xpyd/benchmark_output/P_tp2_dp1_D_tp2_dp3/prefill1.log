@@ -1,0 +1,294 @@
+INFO 11-04 05:17:29 [__init__.py:225] Automatically detected platform cuda.
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:17:34 [api_server.py:1886] vLLM API server version 0.11.1rc2.dev176+g9685387ec
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:17:34 [utils.py:243] non-default args: {'model_tag': 'meta-llama/Meta-Llama-3-70B-Instruct', 'host': '0.0.0.0', 'port': 20001, 'model': 'meta-llama/Meta-Llama-3-70B-Instruct', 'trust_remote_code': True, 'seed': 1024, 'enforce_eager': True, 'tensor_parallel_size': 2, 'max_num_seqs': 256, 'kv_transfer_config': KVTransferConfig(kv_connector='P2pNcclConnector', engine_id='845c700e-f131-4693-9d54-16862f179e6c', kv_buffer_device='cuda', kv_buffer_size=10.0, kv_role='kv_producer', kv_rank=None, kv_parallel_size=1, kv_ip='127.0.0.1', kv_port=21001, kv_connector_extra_config={'proxy_ip': '0.0.0.0', 'proxy_port': '30001', 'http_port': '20001', 'send_type': 'PUT_ASYNC', 'nccl_num_channels': '16'}, kv_connector_module_path=None, enable_permute_local_kv=False)}
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:17:34 [model.py:659] Resolved architecture: LlamaForCausalLM
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:17:34 [model.py:1746] Using max model len 8192
+[1;36m(APIServer pid=266547)[0;0m The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:17:35 [scheduler.py:225] Chunked prefill is enabled with max_num_batched_tokens=8192.
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:17:35 [vllm.py:397] Cudagraph is disabled under eager mode
+INFO 11-04 05:17:38 [__init__.py:225] Automatically detected platform cuda.
+[1;36m(EngineCore_DP0 pid=267155)[0;0m INFO 11-04 05:17:43 [core.py:730] Waiting for init message from front-end.
+[1;36m(EngineCore_DP0 pid=267155)[0;0m INFO 11-04 05:17:43 [core.py:97] Initializing a V1 LLM engine (v0.11.1rc2.dev176+g9685387ec) with config: model='meta-llama/Meta-Llama-3-70B-Instruct', speculative_config=None, tokenizer='meta-llama/Meta-Llama-3-70B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=2, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=True, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None), seed=1024, served_model_name=meta-llama/Meta-Llama-3-70B-Instruct, enable_prefix_caching=True, chunked_prefill_enabled=True, pooler_config=None, compilation_config={'level': None, 'mode': 0, 'debug_dump_path': None, 'cache_dir': '', 'backend': 'inductor', 'custom_ops': ['all'], 'splitting_ops': None, 'use_inductor': None, 'compile_sizes': [], 'inductor_compile_config': {'enable_auto_functionalized_v2': False}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'use_cudagraph': False, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [], 'cudagraph_copy_inputs': False, 'full_cuda_graph': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {}, 'max_capture_size': 0, 'local_cache_dir': None}
+[1;36m(EngineCore_DP0 pid=267155)[0;0m WARNING 11-04 05:17:43 [multiproc_executor.py:752] Reducing Torch parallelism from 96 threads to 1 to avoid unnecessary CPU contention. Set OMP_NUM_THREADS in the external environment to tune this value as needed.
+[1;36m(EngineCore_DP0 pid=267155)[0;0m INFO 11-04 05:17:43 [shm_broadcast.py:315] vLLM message queue communication handle: Handle(local_reader_ranks=[0, 1], buffer_handle=(2, 16777216, 10, 'psm_91f1292e'), local_subscribe_addr='ipc:///tmp/306bf8e8-8f0f-4a84-b1e3-0490b7a427ed', remote_subscribe_addr=None, remote_addr_ipv6=False)
+INFO 11-04 05:17:46 [__init__.py:225] Automatically detected platform cuda.
+INFO 11-04 05:17:46 [__init__.py:225] Automatically detected platform cuda.
+INFO 11-04 05:17:55 [shm_broadcast.py:315] vLLM message queue communication handle: Handle(local_reader_ranks=[0], buffer_handle=(1, 25165824, 10, 'psm_e3843b33'), local_subscribe_addr='ipc:///tmp/791ecbac-cde7-411b-b85b-b98b15dfe34c', remote_subscribe_addr=None, remote_addr_ipv6=False)
+INFO 11-04 05:17:55 [shm_broadcast.py:315] vLLM message queue communication handle: Handle(local_reader_ranks=[0], buffer_handle=(1, 25165824, 10, 'psm_50f35205'), local_subscribe_addr='ipc:///tmp/008e02a8-6b7f-45ec-ab3a-dda7dccb1afb', remote_subscribe_addr=None, remote_addr_ipv6=False)
+[Gloo] Rank 0 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+[Gloo] Rank 1 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+[Gloo] Rank 0 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+[Gloo] Rank 1 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+INFO 11-04 05:17:57 [pynccl.py:111] vLLM is using nccl==2.27.3
+INFO 11-04 05:17:59 [custom_all_reduce.py:37] Skipping P2P check and trusting the driver's P2P report.
+INFO 11-04 05:17:59 [custom_all_reduce.py:37] Skipping P2P check and trusting the driver's P2P report.
+INFO 11-04 05:17:59 [shm_broadcast.py:315] vLLM message queue communication handle: Handle(local_reader_ranks=[1], buffer_handle=(1, 4194304, 6, 'psm_3524a436'), local_subscribe_addr='ipc:///tmp/7872a5ea-146a-42b5-9782-36bfac3a9437', remote_subscribe_addr=None, remote_addr_ipv6=False)
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+[Gloo] Rank 1 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+INFO 11-04 05:17:59 [pynccl.py:111] vLLM is using nccl==2.27.3
+INFO 11-04 05:18:00 [parallel_state.py:1325] rank 0 in world size 2 is assigned as DP rank 0, PP rank 0, TP rank 0, EP rank 0
+INFO 11-04 05:18:00 [parallel_state.py:1325] rank 1 in world size 2 is assigned as DP rank 0, PP rank 0, TP rank 1, EP rank 1
+INFO 11-04 05:18:00 [factory.py:54] Creating v1 connector with name: P2pNcclConnector and engine_id: 845c700e-f131-4693-9d54-16862f179e6c
+WARNING 11-04 05:18:00 [base.py:92] Initializing KVConnectorBase_V1. This API is experimental and subject to change in the future as we iterate the design.
+INFO 11-04 05:18:00 [factory.py:54] Creating v1 connector with name: P2pNcclConnector and engine_id: 845c700e-f131-4693-9d54-16862f179e6c
+WARNING 11-04 05:18:00 [base.py:92] Initializing KVConnectorBase_V1. This API is experimental and subject to change in the future as we iterate the design.
+INFO 11-04 05:18:20 [p2p_nccl_engine.py:176] 💯P2pNcclEngine init, rank:0, local_rank:0, http_address:172.31.8.188:20001, zmq_address:172.31.8.188:21001, proxy_address:0.0.0.0:30001, send_type:PUT_ASYNC, buffer_size_threshold:10.00, nccl_num_channels:16
+INFO 11-04 05:18:20 [p2p_nccl_engine.py:176] 💯P2pNcclEngine init, rank:1, local_rank:1, http_address:172.31.8.188:20001, zmq_address:172.31.8.188:21002, proxy_address:0.0.0.0:30001, send_type:PUT_ASYNC, buffer_size_threshold:10.00, nccl_num_channels:16
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:18:21 [gpu_model_runner.py:2860] Starting to load model meta-llama/Meta-Llama-3-70B-Instruct...
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:18:21 [gpu_model_runner.py:2860] Starting to load model meta-llama/Meta-Llama-3-70B-Instruct...
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:18:21 [cuda.py:403] Using Flash Attention backend on V1 engine.
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:18:21 [cuda.py:403] Using Flash Attention backend on V1 engine.
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:18:22 [weight_utils.py:419] Using model weights format ['*.safetensors']
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:18:22 [weight_utils.py:419] Using model weights format ['*.safetensors']
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:   0% Completed | 0/30 [00:00<?, ?it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:   3% Completed | 1/30 [00:00<00:25,  1.14it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:   7% Completed | 2/30 [00:01<00:26,  1.06it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  10% Completed | 3/30 [00:02<00:25,  1.06it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  13% Completed | 4/30 [00:03<00:24,  1.04it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  17% Completed | 5/30 [00:04<00:24,  1.04it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  20% Completed | 6/30 [00:05<00:22,  1.05it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  23% Completed | 7/30 [00:06<00:20,  1.10it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  27% Completed | 8/30 [00:07<00:20,  1.08it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  30% Completed | 9/30 [00:08<00:17,  1.21it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  33% Completed | 10/30 [00:09<00:17,  1.15it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  37% Completed | 11/30 [00:10<00:17,  1.11it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  40% Completed | 12/30 [00:10<00:16,  1.08it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  43% Completed | 13/30 [00:11<00:16,  1.06it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  47% Completed | 14/30 [00:12<00:15,  1.05it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  50% Completed | 15/30 [00:13<00:14,  1.06it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  53% Completed | 16/30 [00:14<00:13,  1.05it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  57% Completed | 17/30 [00:15<00:12,  1.08it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  60% Completed | 18/30 [00:16<00:11,  1.08it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  63% Completed | 19/30 [00:17<00:10,  1.06it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  67% Completed | 20/30 [00:18<00:09,  1.10it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  70% Completed | 21/30 [00:18<00:06,  1.42it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  73% Completed | 22/30 [00:19<00:06,  1.28it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  77% Completed | 23/30 [00:20<00:05,  1.18it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  80% Completed | 24/30 [00:21<00:05,  1.14it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  83% Completed | 25/30 [00:22<00:04,  1.16it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  87% Completed | 26/30 [00:23<00:03,  1.13it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  90% Completed | 27/30 [00:24<00:02,  1.17it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  93% Completed | 28/30 [00:25<00:01,  1.13it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards:  97% Completed | 29/30 [00:26<00:00,  1.10it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards: 100% Completed | 30/30 [00:27<00:00,  1.09it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m Loading safetensors checkpoint shards: 100% Completed | 30/30 [00:27<00:00,  1.11it/s]
+[1;36m(Worker_TP0 pid=267730)[0;0m 
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:18:50 [default_loader.py:314] Loading weights took 27.10 seconds
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:18:50 [default_loader.py:314] Loading weights took 27.13 seconds
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:18:50 [gpu_model_runner.py:2921] Model loading took 65.7117 GiB and 28.745946 seconds
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:18:51 [gpu_model_runner.py:2921] Model loading took 65.7117 GiB and 28.986700 seconds
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:18:53 [gpu_worker.py:316] Available KV cache memory: 3.68 GiB
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:18:53 [gpu_worker.py:316] Available KV cache memory: 3.68 GiB
+[1;36m(EngineCore_DP0 pid=267155)[0;0m INFO 11-04 05:18:54 [kv_cache_utils.py:1201] GPU KV cache size: 24,128 tokens
+[1;36m(EngineCore_DP0 pid=267155)[0;0m INFO 11-04 05:18:54 [kv_cache_utils.py:1206] Maximum concurrency for 8,192 tokens per request: 2.95x
+[1;36m(EngineCore_DP0 pid=267155)[0;0m INFO 11-04 05:18:54 [kv_cache_utils.py:1201] GPU KV cache size: 24,128 tokens
+[1;36m(EngineCore_DP0 pid=267155)[0;0m INFO 11-04 05:18:54 [kv_cache_utils.py:1206] Maximum concurrency for 8,192 tokens per request: 2.95x
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:18:54 [utils.py:117] Connectors do not specify a kv cache layout, defaulting to NHD.
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:18:54 [utils.py:117] Connectors do not specify a kv cache layout, defaulting to NHD.
+[1;36m(Worker_TP1 pid=267731)[0;0m 2025-11-04 05:18:54,066 - INFO - autotuner.py:256 - flashinfer.jit: [Autotuner]: Autotuning process starts ...
+[1;36m(Worker_TP0 pid=267730)[0;0m 2025-11-04 05:18:54,066 - INFO - autotuner.py:256 - flashinfer.jit: [Autotuner]: Autotuning process starts ...
+[1;36m(Worker_TP1 pid=267731)[0;0m 2025-11-04 05:18:54,929 - INFO - autotuner.py:262 - flashinfer.jit: [Autotuner]: Autotuning process ends
+[1;36m(Worker_TP0 pid=267730)[0;0m 2025-11-04 05:18:54,929 - INFO - autotuner.py:262 - flashinfer.jit: [Autotuner]: Autotuning process ends
+[1;36m(EngineCore_DP0 pid=267155)[0;0m INFO 11-04 05:18:55 [core.py:243] init engine (profile, create kv cache, warmup model) took 4.06 seconds
+[1;36m(EngineCore_DP0 pid=267155)[0;0m INFO 11-04 05:18:56 [factory.py:54] Creating v1 connector with name: P2pNcclConnector and engine_id: 845c700e-f131-4693-9d54-16862f179e6c
+[1;36m(EngineCore_DP0 pid=267155)[0;0m WARNING 11-04 05:18:56 [base.py:92] Initializing KVConnectorBase_V1. This API is experimental and subject to change in the future as we iterate the design.
+[1;36m(EngineCore_DP0 pid=267155)[0;0m INFO 11-04 05:18:56 [vllm.py:397] Cudagraph is disabled under eager mode
+[1;36m(EngineCore_DP0 pid=267155)[0;0m INFO 11-04 05:18:56 [gc_utils.py:40] GC Debug Config. enabled:False,top_objects:-1
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:56 [loggers.py:209] Engine 000: vllm cache_config_info with initialization after num_gpu_blocks is: 1508
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:56 [api_server.py:1639] Supported tasks: ['generate']
+[1;36m(APIServer pid=266547)[0;0m WARNING 11-04 05:18:57 [model.py:1603] Default sampling parameters have been overridden by the model's Hugging Face generation config recommended from the model creator. If this is not intended, please relaunch vLLM instance with `--generation-config vllm`.
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [serving_responses.py:148] Using default chat sampling params from model: {'temperature': 0.6, 'top_p': 0.9}
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [serving_chat.py:130] Using default chat sampling params from model: {'temperature': 0.6, 'top_p': 0.9}
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [serving_completion.py:68] Using default completion sampling params from model: {'temperature': 0.6, 'top_p': 0.9}
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [api_server.py:1955] Starting vLLM API server 0 on http://0.0.0.0:20001
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:38] Available routes are:
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /openapi.json, Methods: GET, HEAD
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /docs, Methods: GET, HEAD
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /docs/oauth2-redirect, Methods: GET, HEAD
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /redoc, Methods: GET, HEAD
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /health, Methods: GET
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /load, Methods: GET
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /ping, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /ping, Methods: GET
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /tokenize, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /detokenize, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /v1/models, Methods: GET
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /version, Methods: GET
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /v1/responses, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /v1/responses/{response_id}, Methods: GET
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /v1/responses/{response_id}/cancel, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /v1/chat/completions, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /v1/completions, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /v1/embeddings, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /pooling, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /classify, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /score, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /v1/score, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /v1/audio/transcriptions, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /v1/audio/translations, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /rerank, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /v1/rerank, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /v2/rerank, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /scale_elastic_ep, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /is_scaling_elastic_ep, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /invocations, Methods: POST
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:18:57 [launcher.py:46] Route: /metrics, Methods: GET
+[1;36m(APIServer pid=266547)[0;0m INFO:     Started server process [266547]
+[1;36m(APIServer pid=266547)[0;0m INFO:     Waiting for application startup.
+[1;36m(APIServer pid=266547)[0;0m INFO:     Application startup complete.
+[1;36m(APIServer pid=266547)[0;0m INFO:     127.0.0.1:58420 - "GET /v1/completions HTTP/1.1" 405 Method Not Allowed
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:36322 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:19:06 [p2p_nccl_engine.py:51] set_p2p_nccl_context, original_values: {'NCCL_MAX_NCHANNELS': None, 'NCCL_MIN_NCHANNELS': None, 'NCCL_CUMEM_ENABLE': None, 'NCCL_BUFFSIZE': None, 'NCCL_PROTO': None, 'NCCL_ALGO': None}
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:19:06 [p2p_nccl_engine.py:51] set_p2p_nccl_context, original_values: {'NCCL_MAX_NCHANNELS': None, 'NCCL_MIN_NCHANNELS': None, 'NCCL_CUMEM_ENABLE': None, 'NCCL_BUFFSIZE': None, 'NCCL_PROTO': None, 'NCCL_ALGO': None}
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:19:06 [p2p_nccl_engine.py:214] 🤝ncclCommInitRank Success, 172.31.8.188:21002👉172.31.8.188:23002, MyRank:0
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:19:06 [p2p_nccl_engine.py:214] 🤝ncclCommInitRank Success, 172.31.8.188:21001👉172.31.8.188:23001, MyRank:0
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43344 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:19:09 [p2p_nccl_engine.py:51] set_p2p_nccl_context, original_values: {'NCCL_MAX_NCHANNELS': None, 'NCCL_MIN_NCHANNELS': None, 'NCCL_CUMEM_ENABLE': None, 'NCCL_BUFFSIZE': None, 'NCCL_PROTO': None, 'NCCL_ALGO': None}
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:19:09 [p2p_nccl_engine.py:51] set_p2p_nccl_context, original_values: {'NCCL_MAX_NCHANNELS': None, 'NCCL_MIN_NCHANNELS': None, 'NCCL_CUMEM_ENABLE': None, 'NCCL_BUFFSIZE': None, 'NCCL_PROTO': None, 'NCCL_ALGO': None}
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:19:09 [p2p_nccl_engine.py:214] 🤝ncclCommInitRank Success, 172.31.8.188:21001👉172.31.8.188:23003, MyRank:0
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:19:09 [p2p_nccl_engine.py:214] 🤝ncclCommInitRank Success, 172.31.8.188:21002👉172.31.8.188:23004, MyRank:0
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43352 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43360 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43366 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43374 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43386 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43394 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43406 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43420 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43436 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43448 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43450 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43454 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43468 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43472 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43488 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43496 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43512 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43526 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43532 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43542 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43550 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43560 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43570 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43586 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43600 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43610 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43620 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43628 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43634 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43642 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43644 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43646 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43654 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43660 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43674 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43676 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43688 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43698 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43706 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43720 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43732 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43748 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43752 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43764 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43774 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43788 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43794 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43804 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43812 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43826 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43834 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43846 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43852 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43864 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43876 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43882 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43896 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43912 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43918 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43932 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43942 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43946 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43948 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:19:10 [p2p_nccl_engine.py:51] set_p2p_nccl_context, original_values: {'NCCL_MAX_NCHANNELS': None, 'NCCL_MIN_NCHANNELS': None, 'NCCL_CUMEM_ENABLE': None, 'NCCL_BUFFSIZE': None, 'NCCL_PROTO': None, 'NCCL_ALGO': None}
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:19:10 [p2p_nccl_engine.py:51] set_p2p_nccl_context, original_values: {'NCCL_MAX_NCHANNELS': None, 'NCCL_MIN_NCHANNELS': None, 'NCCL_CUMEM_ENABLE': None, 'NCCL_BUFFSIZE': None, 'NCCL_PROTO': None, 'NCCL_ALGO': None}
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:19:10 [p2p_nccl_engine.py:214] 🤝ncclCommInitRank Success, 172.31.8.188:21002👉172.31.8.188:23006, MyRank:0
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:19:10 [p2p_nccl_engine.py:214] 🤝ncclCommInitRank Success, 172.31.8.188:21001👉172.31.8.188:23005, MyRank:0
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43956 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43968 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43982 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43990 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43996 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44006 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44012 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44018 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44034 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44040 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44056 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44064 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44068 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44078 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44088 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44090 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44098 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44106 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44108 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44112 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44116 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44132 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:19:17 [loggers.py:199] Engine 000: Avg prompt throughput: 4403.0 tokens/s, Avg generation throughput: 8.6 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 1.1%
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:44138 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:55640 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:55656 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:55666 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:55674 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:55682 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:55686 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:55694 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:55710 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:55722 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:55728 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:19:27 [loggers.py:199] Engine 000: Avg prompt throughput: 614.4 tokens/s, Avg generation throughput: 1.2 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 1.0%
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60258 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60262 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60266 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60268 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60278 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60294 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60310 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60312 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60318 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60334 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60350 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60358 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60368 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60372 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60388 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60390 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60392 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60408 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60418 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60434 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60436 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60438 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60450 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60462 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60464 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60476 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60486 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:60490 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:19:37 [loggers.py:199] Engine 000: Avg prompt throughput: 870.3 tokens/s, Avg generation throughput: 1.7 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.8%
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43400 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43402 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO:     172.31.8.188:43408 - "POST /v1/completions HTTP/1.1" 200 OK
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:19:47 [loggers.py:199] Engine 000: Avg prompt throughput: 716.8 tokens/s, Avg generation throughput: 1.4 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.8%
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:19:57 [loggers.py:199] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 0.0 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.8%
+[1;36m(APIServer pid=266547)[0;0m INFO 11-04 05:20:01 [launcher.py:110] Shutting down FastAPI HTTP server.
+[1;36m(Worker_TP0 pid=267730)[0;0m INFO 11-04 05:20:01 [multiproc_executor.py:591] Parent process exited, terminating worker
+[1;36m(Worker_TP1 pid=267731)[0;0m INFO 11-04 05:20:01 [multiproc_executor.py:591] Parent process exited, terminating worker

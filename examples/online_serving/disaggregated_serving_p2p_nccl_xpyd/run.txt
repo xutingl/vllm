@@ -1,1 +1,4 @@
 nohup ./disagg.sh > disagg_run.log 2>&1 &
+
+nohup python run_disagg.py > disagg_run.log 2>&1 &
+163839

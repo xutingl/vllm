@@ -1,0 +1,54 @@
+INFO 11-04 05:40:31 [__init__.py:225] Automatically detected platform cuda.
+Namespace(subparser='bench', bench_type='serve', dispatch_function=<function BenchmarkServingSubcommand.cmd at 0x73c1e5df04a0>, seed=1762234828, num_prompts=128, dataset_name='random', no_stream=False, dataset_path=None, no_oversample=False, skip_chat_template=False, disable_shuffle=False, custom_output_len=256, spec_bench_output_len=256, spec_bench_category=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, blazedit_min_distance=0.0, blazedit_max_distance=1.0, random_input_len=512, random_output_len=512, random_range_ratio=0.0, random_prefix_len=0, random_batch_size=1, no_reranker=False, random_mm_base_items_per_request=1, random_mm_num_mm_items_range_ratio=0.0, random_mm_limit_mm_per_prompt={'image': 255, 'video': 0}, random_mm_bucket_config={(256, 256, 1): 0.5, (720, 1280, 1): 0.5, (720, 1280, 16): 0.0}, hf_subset=None, hf_split=None, hf_name=None, hf_output_len=None, prefix_repetition_prefix_len=256, prefix_repetition_suffix_len=256, prefix_repetition_num_prefixes=10, prefix_repetition_output_len=128, label=None, backend='openai', base_url=None, host='127.0.0.1', port=10001, endpoint='/v1/completions', header=None, max_concurrency=64, model='meta-llama/Meta-Llama-3-70B-Instruct', tokenizer=None, use_beam_search=False, logprobs=None, request_rate=inf, burstiness=1.0, trust_remote_code=False, disable_tqdm=False, num_warmups=0, profile=False, save_result=False, save_detailed=False, append_result=False, metadata=None, result_dir=None, result_filename=None, ignore_eos=False, percentile_metrics=None, metric_percentiles='99', goodput=None, request_id_prefix='benchmark-serving', top_p=None, top_k=None, min_p=None, temperature=None, frequency_penalty=None, presence_penalty=None, repetition_penalty=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None, ramp_up_strategy=None, ramp_up_start_rps=None, ramp_up_end_rps=None, ready_check_timeout_sec=600, extra_body=None)
+INFO 11-04 05:40:36 [datasets.py:603] Sampling input_len from [511, 511] and output_len from [512, 512]
+Starting initial single prompt test run...
+Waiting for endpoint to become up in 600 seconds
+
+ |          | 00:00 elapsed, ? remaining
+ |          | 00:00 elapsed, 00:10 remaining
+ |          | 00:24 elapsed, 4631:55:46 remaining
+Initial test run completed.
+Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 64
+
+  0%|          | 0/128 [00:00<?, ?it/s]
+  1%|          | 1/128 [00:02<05:36,  2.65s/it]
+  2%|▏         | 2/128 [00:03<03:29,  1.67s/it]
+  2%|▏         | 3/128 [00:05<03:38,  1.74s/it]
+  3%|▎         | 4/128 [00:05<02:22,  1.15s/it]
+  5%|▌         | 7/128 [00:05<00:55,  2.17it/s]
+  7%|▋         | 9/128 [00:05<00:37,  3.18it/s]
+  9%|▊         | 11/128 [00:06<00:26,  4.42it/s]
+ 54%|█████▍    | 69/128 [00:06<00:01, 44.84it/s]
+ 58%|█████▊    | 74/128 [00:25<00:01, 44.84it/s]
+ 59%|█████▊    | 75/128 [05:06<05:22,  6.09s/it]
+ 91%|█████████▏| 117/128 [05:06<00:30,  2.75s/it]
+100%|██████████| 128/128 [05:06<00:00,  2.40s/it]
+tip: install termplotlib and gnuplot to plot the metrics
+============ Serving Benchmark Result ============
+Successful requests:                     43        
+Failed requests:                         85        
+Maximum request concurrency:             64        
+Benchmark duration (s):                  306.73    
+Total input tokens:                      21973     
+Total generated tokens:                  208       
+Request throughput (req/s):              0.14      
+Output token throughput (tok/s):         0.68      
+Peak output token throughput (tok/s):    130.00    
+Peak concurrent requests:                42.00     
+Total Token throughput (tok/s):          72.31     
+---------------Time to First Token----------------
+Mean TTFT (ms):                          5208.01   
+Median TTFT (ms):                        5457.17   
+P99 TTFT (ms):                           5986.69   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          170.68    
+Median TPOT (ms):                        169.79    
+P99 TPOT (ms):                           300.22    
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           134.68    
+Median ITL (ms):                         139.04    
+P99 ITL (ms):                            279.37    
+==================================================
